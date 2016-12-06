@@ -62,8 +62,8 @@ class HoverPreview(sublime_plugin.EventListener):
             if (next_single_quote == -1) and (next_double_quote == -1):
                 return
 
-            # Check if single of double quotes
-            if ((view.find('"', point).a > view.find("'", point).a)) and (view.find("'", point).a != -1):
+            # Check if single or double quotes
+            if ((view.find('"', point).a > view.find("'", point).a) or (view.find('"', point).a == -1)) and (view.find("'", point).a != -1):
                 quote_type = "'"
                 path = re.findall(r"'([^']*)'", hovered_line_text)
                 next_quote = next_single_quote
