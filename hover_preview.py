@@ -1,11 +1,17 @@
+import sublime
+import sublime_plugin
 import struct
 import base64
 import imghdr
-import sublime
-import sublime_plugin
 import os
 import re
 
+''' 
+Method to get image size based on input image.
+
+Obtained from:
+http://stackoverflow.com/questions/8032642/how-to-obtain-image-size-using-standard-python-class-without-using-external-lib
+'''
 def get_image_size(fname):
     '''Determine the image type of fhandle and return its size.
     from draco'''
@@ -40,54 +46,84 @@ def get_image_size(fname):
         else:
             return
         return width, height
+'''
+End of image size method.
+'''
 
 class HoverPreview(sublime_plugin.EventListener):
     def on_hover(self, view, point, hover_zone):
         if (hover_zone == sublime.HOVER_TEXT):
-            hovered_text = view.substr(view.line(point)).strip()
-            path = re.findall(r'"([^"]*)"', hovered_text)
+            hovered_line_text = view.substr(view.line(point)).strip()
 
-            next_quote = view.find('"', point).a
-            all_quotes = view.find_all('"')
+            next_double_quote = view.find('"', point).a
+            next_single_quote = view.find("'", point).a
 
-            final_region = [item for item in all_quotes if item.a == next_quote][0]
+            # Check if quotes exist from the mouse pointer forward
+            if (next_single_quote == -1) and (next_double_quote == -1):
+                return
+
+            # Check if single of double quotes
+            if ((view.find('"', point).a > view.find("'", point).a)) and (view.find("'", point).a != -1):
+                quote_type = "'"
+                path = re.findall(r"'([^']*)'", hovered_line_text)
+                next_quote = next_single_quote
+            else:
+                quote_type = '"'
+                path = re.findall(r'"([^"]*)"', hovered_line_text)
+                next_quote = next_double_quote
+
+            # All quotes in view
+            all_quotes = view.find_all(quote_type)
+            all_match = [item for item in all_quotes if item.a == next_quote]
+
+            # If there are no matches return
+            if len(all_match) == 0:
+                return
+
+            # Get final and initial region of quoted string
+            final_region = all_match[0]
             index = all_quotes.index(final_region) - 1
             initial_region = all_quotes[index]
 
+            # String path for file
             path = view.substr(sublime.Region(initial_region.b, final_region.a))
-
             path = path.split('/')[-1]
 
+            # Regex for images
             pattern = re.compile('([-@\w]+\.(?:jpg|gif|png))')
 
+            if (path and path != "" and pattern.match(path)):
 
-            if (pattern.match(path) and path and path != ""):
-                sel = path
+                # Get base project folder
+                base_folder = sublime.active_window().folders()[0]
 
-                cur_path = sublime.active_window().folders()[0]
-
-                dir_files = os.listdir(cur_path)
-
+                # Find the first file that matches path
                 file_name = ""
-                for root, dirs, files in os.walk(cur_path):
+                for root, dirs, files in os.walk(base_folder):
                     for file in files:
-                        if file.endswith(sel):
-                             # print(os.path.join(root, file))
+                        if file.endswith(path):
                              file_name = os.path.join(root, file)
+                             break
+
+                # Check that file exists
                 if (file_name and os.path.isfile(file_name)):
                     imageInfo = get_image_size(file_name)
                     if imageInfo and imageInfo[0] and imageInfo[0] != 0:
-                        encoded = str(base64.b64encode(open(file_name, "rb").read()), "utf-8")
-
-                        # print(imageInfo)
-                        view.show_popup('<img src="data:image/png;base64,' + encoded + '" width="'+ str(imageInfo[0]) +'" height="'+ str(imageInfo[1]) +'">', flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, location=point)
+                        encoded = str(base64.b64encode(
+                                        open(file_name, "rb").read()
+                                    ), "utf-8")
+                        view.show_popup('<img src="data:image/png;base64,' + 
+                                            encoded + 
+                                        '" width="' + 
+                                            str(imageInfo[0]) + 
+                                        '" height="'+ 
+                                            str(imageInfo[1]) + 
+                                        '">', 
+                                         flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
+                                         location=point)
                         return
-                    else:
-                        return
-                else:
                     return
-            else:
                 return
-        else:
             return
+        return
         
