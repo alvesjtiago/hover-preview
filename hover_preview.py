@@ -57,24 +57,46 @@ class HoverPreview(sublime_plugin.EventListener):
 
             next_double_quote = view.find('"', point).a
             next_single_quote = view.find("'", point).a
+            next_parentheses = view.find(r"\)", point).a
 
-            # Check if quotes exist from the mouse pointer forward
-            if (next_single_quote == -1) and (next_double_quote == -1):
+            symbols_dict = { next_double_quote: '"', 
+                             next_single_quote: "'",
+                             next_parentheses: ')' }
+
+            symbols = []
+            if next_double_quote != -1:
+                symbols.append(next_double_quote)
+            if next_single_quote != -1:
+                symbols.append(next_single_quote)
+            if next_parentheses != -1:
+                symbols.append(next_parentheses)
+
+            # Check if symbols exist from the mouse pointer forward
+            if len(symbols) == 0:
                 return
 
-            # Check if single or double quotes
-            if ((view.find('"', point).a > view.find("'", point).a) or (view.find('"', point).a == -1)) and (view.find("'", point).a != -1):
-                quote_type = "'"
-                path = re.findall(r"'([^']*)'", hovered_line_text)
-                next_quote = next_single_quote
-            else:
-                quote_type = '"'
-                path = re.findall(r'"([^"]*)"', hovered_line_text)
-                next_quote = next_double_quote
+            closest_symbol = min(symbols)
+            symbol = symbols_dict[closest_symbol]
+
+            quote_type = symbol
+
+            regex = r""
+            if symbol == "'":
+                regex = r"'([^']*)'"
+            elif symbol == '"':
+                regex = r'"([^"]*)"'
+            elif symbol == ")":
+                regex = r'\(([^()]*)\)'
+
+            path = re.findall(regex, hovered_line_text)
 
             # All quotes in view
-            all_quotes = view.find_all(quote_type)
-            all_match = [item for item in all_quotes if item.a == next_quote]
+            if symbol == ")":
+                all_quotes = view.find_all(r"\(|\)")
+                all_match = [item for item in all_quotes if (item.a == closest_symbol)]
+            else:
+                all_quotes = view.find_all(quote_type)
+                all_match = [item for item in all_quotes if item.a == closest_symbol]
 
             # If there are no matches return
             if len(all_match) == 0:
@@ -87,7 +109,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
             # String path for file
             path = view.substr(sublime.Region(initial_region.b, final_region.a))
-            path = path.split('/')[-1]
+            path = path.strip().split('/')[-1]
 
             # Regex for images
             pattern = re.compile('([-@\w]+\.(?:jpg|gif|png))')
