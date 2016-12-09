@@ -25,3 +25,9 @@ _Windows_
 cd "%APPDATA%\Sublime Text 3\Packages/User"
 git clone --depth=1 git://github.com/alvesjtiago/hover-preview.git
 ```
+
+## Contribute
+
+Hover Preview is a small utility created by [Tiago Alves](https://twitter.com/alvesjtiago).
+Any help on this project is more than welcome. Or if you find any problems, please comment or open an issue with as much information as you can provide.
+
