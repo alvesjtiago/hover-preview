@@ -6,11 +6,20 @@ A Sublime Text 2/3 plugin to preview images on project simply by hovering on a f
 
 ## How to install
 
-1. Open the packages folder
-![Example](install-images/packages.png)
+_macOS_
+```
+cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User/
+git clone git://github.com/alvesjtiago/hover-preview.git
+```
 
-2. Go to User folder
-![Example](install-images/user.png)
+_Ubuntu_
+```
+cd ~/.config/sublime-text-3/Packages/User
+git clone git://github.com/alvesjtiago/hover-preview.git
+```
 
-3. Copy and paste the hover_preview.py file
-![Example](install-images/file.png)
+_Windows_
+```
+cd "%APPDATA%\Sublime Text 3\Packages/User"
+git clone git://github.com/alvesjtiago/hover-preview.git
+```
