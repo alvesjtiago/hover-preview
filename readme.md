@@ -1,6 +1,6 @@
 # Hover Preview
 
-Preview images on project by hovering on a file name.
+A Sublime Text 2/3 plugin to preview images on project simply by hovering on a file name.
 
 ![Example](example.jpg)
 
