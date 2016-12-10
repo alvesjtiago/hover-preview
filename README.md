@@ -22,7 +22,7 @@ git clone --depth=1 git://github.com/alvesjtiago/hover-preview.git
 
 _Windows_
 ```
-cd "%APPDATA%\Sublime Text 3\Packages/User"
+cd "%APPDATA%\Sublime Text 3\Packages\User"
 git clone --depth=1 git://github.com/alvesjtiago/hover-preview.git
 ```
 
