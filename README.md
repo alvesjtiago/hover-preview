@@ -10,17 +10,17 @@ Hover Preview has been submitted to [Package Control](https://packagecontrol.io)
 
 _macOS_
 ```
-cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User/
-curl -O https://raw.githubusercontent.com/alvesjtiago/hover-preview/master/hover_preview.py
+cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages
+git clone https://github.com/alvesjtiago/hover-preview.git
 ```
 
 _Ubuntu_
 ```
-cd ~/.config/sublime-text-3/Packages/User
-curl -O https://raw.githubusercontent.com/alvesjtiago/hover-preview/master/hover_preview.py
+cd ~/.config/sublime-text-3/Packages
+git clone https://github.com/alvesjtiago/hover-preview.git
 ```
 
-Or just manually copy the hover_preview.py file to your User Packages folder.
+Or manually create a folder named "hover-preview" on your Packages folder and copy the content of this repo to it.
 
 ## Contribute
 
