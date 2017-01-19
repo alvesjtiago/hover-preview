@@ -78,24 +78,12 @@ class HoverPreview(sublime_plugin.EventListener):
             closest_symbol = min(symbols)
             symbol = symbols_dict[closest_symbol]
 
-            quote_type = symbol
-
-            regex = r""
-            if symbol == "'":
-                regex = r"'([^']*)'"
-            elif symbol == '"':
-                regex = r'"([^"]*)"'
-            elif symbol == ")":
-                regex = r'\(([^()]*)\)'
-
-            path = re.findall(regex, hovered_line_text)
-
             # All quotes in view
             if symbol == ")":
                 all_quotes = view.find_all(r"\(|\)")
                 all_match = [item for item in all_quotes if (item.a == closest_symbol)]
             else:
-                all_quotes = view.find_all(quote_type)
+                all_quotes = view.find_all(symbol)
                 all_match = [item for item in all_quotes if item.a == closest_symbol]
 
             # If there are no matches return
