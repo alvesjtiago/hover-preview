@@ -1,54 +1,8 @@
 import sublime
 import sublime_plugin
-import struct
 import base64
-import imghdr
 import os
 import re
-
-''' 
-Method to get image size based on input image.
-
-Obtained from:
-http://stackoverflow.com/questions/8032642/how-to-obtain-image-size-using-standard-python-class-without-using-external-lib
-'''
-def get_image_size(fname):
-    '''Determine the image type of fhandle and return its size.
-    from draco'''
-    with open(fname, 'rb') as fhandle:
-        head = fhandle.read(24)
-        if len(head) != 24:
-            return
-        if imghdr.what(fname) == 'png':
-            check = struct.unpack('>i', head[4:8])[0]
-            if check != 0x0d0a1a0a:
-                return
-            width, height = struct.unpack('>ii', head[16:24])
-        elif imghdr.what(fname) == 'gif':
-            width, height = struct.unpack('<HH', head[6:10])
-        elif imghdr.what(fname) == 'jpeg':
-            try:
-                fhandle.seek(0) # Read 0xff next
-                size = 2
-                ftype = 0
-                while not 0xc0 <= ftype <= 0xcf:
-                    fhandle.seek(size, 1)
-                    byte = fhandle.read(1)
-                    while ord(byte) == 0xff:
-                        byte = fhandle.read(1)
-                    ftype = ord(byte)
-                    size = struct.unpack('>H', fhandle.read(2))[0] - 2
-                # We are at a SOFn block
-                fhandle.seek(1, 1)  # Skip `precision' byte.
-                height, width = struct.unpack('>HH', fhandle.read(4))
-            except Exception: #IGNORE:W0703
-                return
-        else:
-            return
-        return width, height
-'''
-End of image size method.
-'''
 
 class HoverPreview(sublime_plugin.EventListener):
     def on_hover(self, view, point, hover_zone):
@@ -112,26 +66,19 @@ class HoverPreview(sublime_plugin.EventListener):
                 for root, dirs, files in os.walk(base_folder):
                     for file in files:
                         if file.endswith(path):
-                             file_name = os.path.join(root, file)
-                             break
+                            file_name = os.path.join(root, file)
+                            break
 
                 # Check that file exists
                 if (file_name and os.path.isfile(file_name)):
-                    imageInfo = get_image_size(file_name)
-                    if imageInfo and imageInfo[0] and imageInfo[0] != 0:
-                        encoded = str(base64.b64encode(
-                                        open(file_name, "rb").read()
-                                    ), "utf-8")
-                        view.show_popup('<img src="data:image/png;base64,' + 
-                                            encoded + 
-                                        '" width="' + 
-                                            str(imageInfo[0]) + 
-                                        '" height="'+ 
-                                            str(imageInfo[1]) + 
-                                        '">', 
-                                         flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
-                                         location=point)
-                        return
+                    encoded = str(base64.b64encode(
+                                    open(file_name, "rb").read()
+                                ), "utf-8")
+                    view.show_popup('<img src="data:image/png;base64,' + 
+                                        encoded + 
+                                    '">', 
+                                     flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
+                                     location=point)
                     return
                 return
             return
