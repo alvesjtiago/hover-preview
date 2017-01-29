@@ -3,6 +3,7 @@ import sublime_plugin
 import base64
 import os
 import re
+import urllib.request
 
 class HoverPreview(sublime_plugin.EventListener):
     def on_hover(self, view, point, hover_zone):
@@ -51,6 +52,32 @@ class HoverPreview(sublime_plugin.EventListener):
 
             # String path for file
             path = view.substr(sublime.Region(initial_region.b, final_region.a))
+
+            ### Handle URL's ###
+            # Check URL (from http://codereview.stackexchange.com/questions/19663/http-url-validating)
+            url = re.compile(
+                r'^(?:http|ftp)s?://' # http:// or https://
+                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' # domain...
+                r'localhost|' # localhost...
+                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|' # ...or ipv4
+                r'\[?[A-F0-9]*:[A-F0-9:]+\]?)' # ...or ipv6
+                r'(?::\d+)?' # optional port
+                r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+            # Regex for images
+            imageURL = re.compile('.+(?:jpg|gif|png)')
+            # Display and return if it's a URL with an image extension
+            if (url.match(path) and imageURL.match(path)):
+                print(path)
+                f = urllib.request.urlopen(path)
+                encoded = str(base64.b64encode(f.read()), "utf-8")
+                view.show_popup('<img src="data:image/png;base64,' + 
+                                    encoded + 
+                                '">', 
+                                 flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
+                                 location=point)
+                return
+            ### End handle URL's ###
+
             path = path.strip().split('/')[-1]
 
             # Regex for images
