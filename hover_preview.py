@@ -5,6 +5,8 @@ import os
 import re
 import urllib.request
 
+IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
+
 class HoverPreview(sublime_plugin.EventListener):
     def on_hover(self, view, point, hover_zone):
         if (hover_zone == sublime.HOVER_TEXT):
@@ -64,7 +66,7 @@ class HoverPreview(sublime_plugin.EventListener):
                 r'(?::\d+)?' # optional port
                 r'(?:/?|[/?]\S+)$', re.IGNORECASE)
             # Regex for images
-            imageURL = re.compile('.+(?:jpg|gif|png)')
+            imageURL = re.compile('.+(?:' + IMAGE_FORMATS + ')')
             # Display and return if it's a URL with an image extension
             if (url.match(path) and imageURL.match(path)):
                 print(path)
@@ -81,7 +83,7 @@ class HoverPreview(sublime_plugin.EventListener):
             path = path.strip().split('/')[-1]
 
             # Regex for images
-            pattern = re.compile('([-@\w]+\.(?:jpg|gif|png))')
+            pattern = re.compile('([-@\w]+\.(?:' + IMAGE_FORMATS + '))')
 
             if (path and path != "" and pattern.match(path)):
 
