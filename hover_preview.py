@@ -3,6 +3,7 @@ import sublime_plugin
 import base64
 import os
 import re
+import urllib.parse
 import urllib.request
 
 IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
@@ -69,8 +70,8 @@ class HoverPreview(sublime_plugin.EventListener):
             imageURL = re.compile('.+(?:' + IMAGE_FORMATS + ')')
             # Display and return if it's a URL with an image extension
             if (url.match(path) and imageURL.match(path)):
-                print(path)
-                f = urllib.request.urlopen(path)
+                url_path = urllib.parse.quote(path).replace("%3A", ":", 1)
+                f = urllib.request.urlopen(url_path)
                 encoded = str(base64.b64encode(f.read()), "utf-8")
                 view.show_popup('<img src="data:image/png;base64,' + 
                                     encoded + 
@@ -88,15 +89,16 @@ class HoverPreview(sublime_plugin.EventListener):
             if (path and path != "" and pattern.match(path)):
 
                 # Get base project folder
-                base_folder = sublime.active_window().folders()[0]
+                base_folders = sublime.active_window().folders()
 
                 # Find the first file that matches path
-                file_name = ""
-                for root, dirs, files in os.walk(base_folder):
-                    for file in files:
-                        if file.endswith(path):
-                            file_name = os.path.join(root, file)
-                            break
+                for base_folder in base_folders:
+                    file_name = ""
+                    for root, dirs, files in os.walk(base_folder):
+                        for file in files:
+                            if file.endswith(path):
+                                file_name = os.path.join(root, file)
+                                break
 
                 # Check that file exists
                 if (file_name and os.path.isfile(file_name)):
