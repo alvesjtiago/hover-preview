@@ -11,8 +11,6 @@ IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
 class HoverPreview(sublime_plugin.EventListener):
     def on_hover(self, view, point, hover_zone):
         if (hover_zone == sublime.HOVER_TEXT):
-            hovered_line_text = view.substr(view.line(point)).strip()
-
             next_double_quote = view.find('"', point).a
             next_single_quote = view.find("'", point).a
             next_parentheses = view.find(r"\)", point).a
@@ -52,6 +50,10 @@ class HoverPreview(sublime_plugin.EventListener):
             final_region = all_match[0]
             index = all_quotes.index(final_region) - 1
             initial_region = all_quotes[index]
+
+            if point < initial_region.b or point > final_region.a:
+                return
+
 
             # String path for file
             path = view.substr(sublime.Region(initial_region.b, final_region.a))
