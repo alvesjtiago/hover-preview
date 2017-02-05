@@ -53,8 +53,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
             if point < initial_region.b or point > final_region.a:
                 return
-
-
+            
             # String path for file
             path = view.substr(sublime.Region(initial_region.b, final_region.a))
 
