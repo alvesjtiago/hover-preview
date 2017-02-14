@@ -69,7 +69,7 @@ class HoverPreview(sublime_plugin.EventListener):
                 r'(?::\d+)?' # optional port
                 r'(?:/?|[/?]\S+)$', re.IGNORECASE)
             # Regex for images
-            imageURL = re.compile('.+(?:' + IMAGE_FORMATS + ')')
+            imageURL = re.compile('.+(?:' + IMAGE_FORMATS + ')', re.IGNORECASE)
             # Display and return if it's a URL with an image extension
             if (url.match(path) and imageURL.match(path)):
                 url_path = urllib.parse.quote(path).replace("%3A", ":", 1)
@@ -86,7 +86,7 @@ class HoverPreview(sublime_plugin.EventListener):
             path = path.strip().split('/')[-1]
 
             # Regex for images
-            pattern = re.compile('([-@\w]+\.(?:' + IMAGE_FORMATS + '))')
+            pattern = re.compile('([-@\w]+\.(?:' + IMAGE_FORMATS + '))', re.IGNORECASE)
 
             if (path and path != "" and pattern.match(path)):
 
