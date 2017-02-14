@@ -5,6 +5,7 @@ import os
 import re
 import urllib.parse
 import urllib.request
+from . import get_image_size
 
 IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
 
@@ -106,7 +107,31 @@ class HoverPreview(sublime_plugin.EventListener):
                     encoded = str(base64.b64encode(
                                     open(file_name, "rb").read()
                                 ), "utf-8")
-                    view.show_popup('<img src="data:image/png;base64,' + 
+
+                    # Current max dimensions of ST3 popup
+                    max_width = 270
+                    max_height = 188
+                    max_ratio = max_height / max_width
+
+                    # Get image dimensions
+                    try:
+                        width, height = get_image_size.get_image_size(file_name)
+                    except get_image_size.UnknownImageFormat:
+                        width, height = -1, -1
+
+                    # First check height since it's the smallest vector
+                    if height / width >= max_ratio and height > max_height:
+                        ratio = max_height / height
+                        width = width * ratio
+                        height = height * ratio
+                    elif height / width <= max_ratio and width > max_width:
+                        ratio = max_width / width
+                        width = width * ratio
+                        height = height * ratio
+
+                    view.show_popup('<img style="width:' + str(width) + 
+                                                'px;height:' + str(height) + 
+                                                'px;" src="data:image/png;base64,' + 
                                         encoded + 
                                     '">', 
                                      flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
