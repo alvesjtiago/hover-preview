@@ -18,7 +18,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
             symbols_dict = { next_double_quote: '"', 
                              next_single_quote: "'",
-                             next_parentheses: ')' }
+                             next_parentheses: ')' }       
 
             symbols = []
             if next_double_quote != -1:
@@ -94,8 +94,8 @@ class HoverPreview(sublime_plugin.EventListener):
                 base_folders = sublime.active_window().folders()
 
                 # Find the first file that matches path
+                file_name = ""
                 for base_folder in base_folders:
-                    file_name = ""
                     for root, dirs, files in os.walk(base_folder):
                         for file in files:
                             if file.endswith(path):
