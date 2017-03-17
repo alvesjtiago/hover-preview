@@ -86,7 +86,7 @@ class HoverPreview(sublime_plugin.EventListener):
             path = path.strip().split('/')[-1]
 
             # Regex for images
-            pattern = re.compile('([-@\w]+\.(?:' + IMAGE_FORMATS + '))', re.IGNORECASE)
+            pattern = re.compile('([-@\w.]+\.(?:' + IMAGE_FORMATS + '))', re.IGNORECASE)
 
             if (path and path != "" and pattern.match(path)):
 
