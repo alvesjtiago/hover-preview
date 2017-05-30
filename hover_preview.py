@@ -96,8 +96,16 @@ class HoverPreview(sublime_plugin.EventListener):
             imageURL = re.compile('.+(?:' + IMAGE_FORMATS + ')', re.IGNORECASE)
             # Display and return if it's a URL with an image extension
             if (url.match(path) and imageURL.match(path)):
-                url_path = urllib.parse.quote(path).replace("%3A", ":", 1)
-                f = urllib.request.urlopen(url_path)
+                try:
+                    url_path = urllib.parse.quote(path).replace("%3A", ":", 1)
+                    f = urllib.request.urlopen(url_path)
+                except:
+                    try:
+                        url_path = urllib.parse.unquote(path)
+                        f = urllib.request.urlopen(url_path)
+                    except:
+                        url_path = path
+                        f = urllib.request.urlopen(url_path)
 
                 urllib.request.urlretrieve(url_path, "tmp_image.png")
                 width, height = HoverPreview.width_and_height_from_path("tmp_image.png")
