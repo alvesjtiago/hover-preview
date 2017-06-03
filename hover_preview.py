@@ -10,10 +10,10 @@ from . import get_image_size
 IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
 
 class HoverPreview(sublime_plugin.EventListener):
-    def width_and_height_from_path(path):
-        # Current max dimensions of ST3 popup
-        max_width = 270
-        max_height = 188
+    def width_and_height_from_path(path, view):
+        # Allow max automatic detection and remove gutter
+        max_width = view.viewport_extent()[0] - 60
+        max_height = view.viewport_extent()[1] - 60
         max_ratio = max_height / max_width
 
         # Get image dimensions
@@ -108,7 +108,7 @@ class HoverPreview(sublime_plugin.EventListener):
                         f = urllib.request.urlopen(url_path)
 
                 urllib.request.urlretrieve(url_path, "tmp_image.png")
-                width, height = HoverPreview.width_and_height_from_path("tmp_image.png")
+                width, height = HoverPreview.width_and_height_from_path("tmp_image.png", view)
 
                 encoded = str(base64.b64encode(f.read()), "utf-8")
                 view.show_popup('<img style="width:' + str(width) + 
@@ -117,7 +117,9 @@ class HoverPreview(sublime_plugin.EventListener):
                                     encoded + 
                                 '">', 
                                  flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
-                                 location=point)
+                                 location=point,
+                                 max_width=view.viewport_extent()[0],
+                                 max_height=view.viewport_extent()[1])
                 return
             ### End handle URL's ###
 
@@ -146,7 +148,7 @@ class HoverPreview(sublime_plugin.EventListener):
                                     open(file_name, "rb").read()
                                 ), "utf-8")
 
-                    width, height = HoverPreview.width_and_height_from_path(file_name)
+                    width, height = HoverPreview.width_and_height_from_path(file_name, view)
 
                     view.show_popup('<img style="width:' + str(width) + 
                                                 'px;height:' + str(height) + 
@@ -154,7 +156,9 @@ class HoverPreview(sublime_plugin.EventListener):
                                         encoded + 
                                     '">', 
                                      flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
-                                     location=point)
+                                     location=point,
+                                     max_width=view.viewport_extent()[0],
+                                     max_height=view.viewport_extent()[1])
                     return
                 return
             return
