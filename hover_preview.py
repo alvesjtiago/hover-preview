@@ -108,6 +108,7 @@ class HoverPreview(sublime_plugin.EventListener):
                         f = urllib.request.urlopen(url_path)
 
                 urllib.request.urlretrieve(url_path, "tmp_image.png")
+                real_width, real_height = get_image_size.get_image_size("tmp_image.png")
                 width, height = HoverPreview.width_and_height_from_path("tmp_image.png", view)
 
                 encoded = str(base64.b64encode(f.read()), "utf-8")
@@ -115,7 +116,7 @@ class HoverPreview(sublime_plugin.EventListener):
                                             'px;height:' + str(height) + 
                                             'px;" src="data:image/png;base64,' + 
                                     encoded + 
-                                '">', 
+                                '"><div>' + str(real_width) + ' x ' + str(real_height) + '</div>', 
                                  flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
                                  location=point,
                                  max_width=view.viewport_extent()[0],
@@ -148,13 +149,14 @@ class HoverPreview(sublime_plugin.EventListener):
                                     open(file_name, "rb").read()
                                 ), "utf-8")
 
+                    real_width, real_height = get_image_size.get_image_size(file_name)
                     width, height = HoverPreview.width_and_height_from_path(file_name, view)
 
                     view.show_popup('<img style="width:' + str(width) + 
                                                 'px;height:' + str(height) + 
                                                 'px;" src="data:image/png;base64,' + 
                                         encoded + 
-                                    '">', 
+                                    '"><div>' + str(real_width) + ' x ' + str(real_height) + '</div>', 
                                      flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY, 
                                      location=point,
                                      max_width=view.viewport_extent()[0],
