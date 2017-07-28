@@ -5,6 +5,7 @@ import os
 import re
 import urllib.parse
 import urllib.request
+import tempfile
 from . import get_image_size
 
 IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
@@ -107,9 +108,10 @@ class HoverPreview(sublime_plugin.EventListener):
                         url_path = path
                         f = urllib.request.urlopen(url_path)
 
-                urllib.request.urlretrieve(url_path, "tmp_image.png")
-                real_width, real_height = get_image_size.get_image_size("tmp_image.png")
-                width, height = HoverPreview.width_and_height_from_path("tmp_image.png", view)
+                tmp_file_path = os.path.join(tempfile.gettempdir(), "tmp_image.png")
+                urllib.request.urlretrieve(url_path, tmp_file_path)
+                real_width, real_height = get_image_size.get_image_size(tmp_file_path)
+                width, height = HoverPreview.width_and_height_from_path(tmp_file_path, view)
 
                 encoded = str(base64.b64encode(f.read()), "utf-8")
                 view.show_popup('<img style="width:' + str(width) + 
