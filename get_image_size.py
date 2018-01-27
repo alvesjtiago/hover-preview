@@ -65,11 +65,11 @@ class Image(collections.namedtuple('Image', image_fields)):
 
 def get_image_size(file_path):
     """
-    Return (width, height) for a given img file content - no external
+    Return (width, height, file_size) for a given img file content - no external
     dependencies except the os and struct builtin modules
     """
     img = get_image_metadata(file_path)
-    return (img.width, img.height)
+    return (img.width, img.height, img.file_size)
 
 
 def get_image_metadata(file_path):
