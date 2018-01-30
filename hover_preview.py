@@ -78,8 +78,10 @@ class HoverPreview(sublime_plugin.EventListener):
                        size // 1024))
         else:
             HoverPreview.too_bigu = True
-            view.update_popup('<a href="resizeu"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko</div>'.format(
-                width, height, encoded, real_width, real_height, size // 1024))
+            view.update_popup(
+                '<a href="resizeu"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko</div>'.
+                format(width, height, encoded, real_width, real_height, size //
+                       1024))
 
     def on_hover(self, view, point, hover_zone):
         if hover_zone == sublime.HOVER_TEXT:
@@ -102,7 +104,7 @@ class HoverPreview(sublime_plugin.EventListener):
                 symbols.append(next_parentheses)
 
             # Check if symbols exist from the mouse pointer forward
-            if len(symbols) == 0:
+            if not symbols:
                 return
 
             closest_symbol = min(symbols)
@@ -111,21 +113,19 @@ class HoverPreview(sublime_plugin.EventListener):
             # All quotes in view
             if symbol == ")":
                 all_quotes = view.find_all(r"\(|\)")
-                all_match = [
-                    item for item in all_quotes if (item.a == closest_symbol)
-                ]
+                all_match = (item for item in all_quotes
+                             if item.a == closest_symbol)
             else:
                 all_quotes = view.find_all(symbol)
-                all_match = [
-                    item for item in all_quotes if item.a == closest_symbol
-                ]
+                all_match = (item for item in all_quotes
+                             if item.a == closest_symbol)
 
             # If there are no matches return
             if not all_match:
                 return
 
             # Get final and initial region of quoted string
-            final_region = all_match[0]
+            final_region = next(all_match)
             index = all_quotes.index(final_region) - 1
             initial_region = all_quotes[index]
 
