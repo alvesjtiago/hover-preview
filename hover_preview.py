@@ -209,7 +209,7 @@ class HoverPreview(sublime_plugin.EventListener):
                                 break
 
                 # Check that file exists
-                if file_name and os.path.isfile(file_name):
+                if os.path.isfile(file_name):
                     encoded = str(
                         base64.b64encode(open(file_name, "rb").read()),
                         "utf-8")
