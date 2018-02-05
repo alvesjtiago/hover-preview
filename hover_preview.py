@@ -57,15 +57,15 @@ class HoverPreview(sublime_plugin.EventListener):
             HoverPreview.too_bigf = False
             new_width, new_height = HoverPreview.fix_oversize(width, height)
             view.update_popup(
-                '<a href="resizef"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko    <a href="open" style="text-decoration: none">open</a></div>'.
-                format(new_width, new_height, encoded, real_width, real_height,
-                       size // 1024))
+                '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo    <a href="open" style="text-decoration: none">open</a></div>'
+                % (new_width, new_height, encoded, real_width, real_height,
+                   size // 1024))
         else:
             HoverPreview.too_bigf = True
             view.update_popup(
-                '<a href="resizef"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko    <a href="open" style="text-decoration: none">open</a></div>'.
-                format(width, height, encoded, real_width, real_height, size //
-                       1024))
+                '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo    <a href="open" style="text-decoration: none">open</a></div>'
+                % (width, height, encoded, real_width, real_height,
+                   size // 1024))
 
     def resizeu(view, width, height, real_width, real_height, size, encoded):
         '''resizes the url-based images (u for url)'''
@@ -73,15 +73,15 @@ class HoverPreview(sublime_plugin.EventListener):
             HoverPreview.too_bigu = False
             new_width, new_height = HoverPreview.fix_oversize(width, height)
             view.update_popup(
-                '<a href="resizeu"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko</div>'.
-                format(new_width, new_height, encoded, real_width, real_height,
-                       size // 1024))
+                '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo</div>'
+                % (new_width, new_height, encoded, real_width, real_height,
+                   size // 1024))
         else:
             HoverPreview.too_bigu = True
             view.update_popup(
-                '<a href="resizeu"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko</div>'.
-                format(width, height, encoded, real_width, real_height, size //
-                       1024))
+                '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo</div>'
+                % (width, height, encoded, real_width, real_height,
+                   size // 1024))
 
     def on_hover(self, view, point, hover_zone):
         if hover_zone == sublime.HOVER_TEXT:
@@ -173,9 +173,9 @@ class HoverPreview(sublime_plugin.EventListener):
 
                 encoded = str(base64.b64encode(f.read()), "utf-8")
                 view.show_popup(
-                    '<a href="resizeu"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko</div>'.
-                    format(width, height, encoded, real_width, real_height,
-                           size // 1024),
+                    '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo</div>'
+                    % (width, height, encoded, real_width, real_height,
+                       size // 1024),
                     flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY,
                     location=point,
                     max_width=view.viewport_extent()[0],
@@ -191,7 +191,7 @@ class HoverPreview(sublime_plugin.EventListener):
             path = path.strip().split('/')[-1]
 
             # Regex for images
-            pattern = re.compile('([-@\w.]+\.(?:' + IMAGE_FORMATS + '))',
+            pattern = re.compile('([-@\\w.]+\\.(?:' + IMAGE_FORMATS + '))',
                                  re.IGNORECASE)
 
             if path and pattern.match(path):
@@ -220,7 +220,7 @@ class HoverPreview(sublime_plugin.EventListener):
                         file_name, view)
 
                     view.show_popup(
-                        '<a href="resizef"><img style="width: {}px;height: {}px;" src="data:image/png;base64,{}"></a><div>{}x{} {}Ko    <a href="open" style="text-decoration: none">open</a></div>'.format(width, height, encoded, real_width, real_height, size // 1024),
+                        '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo    <a href="open" style="text-decoration: none">open</a></div>' % (width, height, encoded, real_width, real_height, size // 1024),
                         flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY,
                         location=point,
                         max_width=view.viewport_extent()[0],
