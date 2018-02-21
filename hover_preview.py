@@ -39,7 +39,7 @@ class HoverPreview(sublime_plugin.EventListener):
         return (width, height)
 
     def fix_oversize(width, height):
-        '''shrinks the popup if its bigger than MAX_WIDTH x MAX_HEIGHT'''
+        # Shrinks the popup if its bigger than MAX_WIDTH x MAX_HEIGHT
         if width > MAX_WIDTH or height > MAX_HEIGHT:
             if width > height:
                 ratio = MAX_WIDTH / width
@@ -52,34 +52,34 @@ class HoverPreview(sublime_plugin.EventListener):
         return (new_width, new_height)
 
     def resizef(view, width, height, real_width, real_height, size, encoded):
-        '''resizes file-based images (f for file)'''
+        # Resizes file-based images (f for file)
         if HoverPreview.too_bigf:
             HoverPreview.too_bigf = False
             new_width, new_height = HoverPreview.fix_oversize(width, height)
             view.update_popup(
-                '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo    <a href="open" style="text-decoration: none">open</a></div>'
+                '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKB    <a href="open" style="text-decoration: none">Open</a></div>'
                 % (new_width, new_height, encoded, real_width, real_height,
                    size // 1024))
         else:
             HoverPreview.too_bigf = True
             view.update_popup(
-                '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo    <a href="open" style="text-decoration: none">open</a></div>'
+                '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKB    <a href="open" style="text-decoration: none">Open</a></div>'
                 % (width, height, encoded, real_width, real_height,
                    size // 1024))
 
     def resizeu(view, width, height, real_width, real_height, size, encoded):
-        '''resizes the url-based images (u for url)'''
+        # Resizes the url-based images (u for url)
         if HoverPreview.too_bigu:
             HoverPreview.too_bigu = False
             new_width, new_height = HoverPreview.fix_oversize(width, height)
             view.update_popup(
-                '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo</div>'
+                '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKB</div>'
                 % (new_width, new_height, encoded, real_width, real_height,
                    size // 1024))
         else:
             HoverPreview.too_bigu = True
             view.update_popup(
-                '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo</div>'
+                '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKB</div>'
                 % (width, height, encoded, real_width, real_height,
                    size // 1024))
 
@@ -173,7 +173,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
                 encoded = str(base64.b64encode(f.read()), "utf-8")
                 view.show_popup(
-                    '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo</div>'
+                    '<a href="resizeu"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKB</div>'
                     % (width, height, encoded, real_width, real_height,
                        size // 1024),
                     flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY,
@@ -220,7 +220,7 @@ class HoverPreview(sublime_plugin.EventListener):
                         file_name, view)
 
                     view.show_popup(
-                        '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKo    <a href="open" style="text-decoration: none">open</a></div>' % (width, height, encoded, real_width, real_height, size // 1024),
+                        '<a href="resizef"><img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s"></a><div>%dx%d %dKB    <a href="open" style="text-decoration: none">Open</a></div>' % (width, height, encoded, real_width, real_height, size // 1024),
                         flags=sublime.HIDE_ON_MOUSE_MOVE_AWAY,
                         location=point,
                         max_width=view.viewport_extent()[0],

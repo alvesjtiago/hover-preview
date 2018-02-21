@@ -59,8 +59,8 @@ class Image(collections.namedtuple('Image', image_fields)):
 
 def get_image_size(file_path):
     """
-    Return (width, height, file_size) for a given img file content - no external
-    dependencies except the os and struct builtin modules
+    Return (width, height, file_size) for a given img file content - no 
+    external dependencies except the os and struct builtin modules
     """
     img = get_image_metadata(file_path)
     return (img.width, img.height, img.file_size)
@@ -92,8 +92,9 @@ def get_image_metadata(file_path):
             w, h = struct.unpack("<HH", data[6:10])
             width = int(w)
             height = int(h)
-        elif size >= 24 and data.startswith(
-                b'\211PNG\r\n\032\n') and data[12:16] == b'IHDR':
+        elif size >= 24 and 
+             data.startswith(b'\211PNG\r\n\032\n') and 
+             data[12:16] == b'IHDR':
             # PNGs
             imgtype = PNG
             w, h = struct.unpack(">LL", data[16:24])
@@ -298,7 +299,7 @@ def main(argv=None):
     prs = optparse.OptionParser(
         usage="%prog [-v|--verbose] [--json|--json-indent] <path0> [<pathN>]",
         description="Print metadata for the given image paths "
-        "(without image library bindings).")
+                    "(without image library bindings).")
 
     prs.add_option('--json', dest='json', action='store_true')
     prs.add_option('--json-indent', dest='json_indent', action='store_true')
