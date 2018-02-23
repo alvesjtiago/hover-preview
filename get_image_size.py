@@ -92,9 +92,7 @@ def get_image_metadata(file_path):
             w, h = struct.unpack("<HH", data[6:10])
             width = int(w)
             height = int(h)
-        elif size >= 24 and 
-             data.startswith(b'\211PNG\r\n\032\n') and 
-             data[12:16] == b'IHDR':
+        elif size >= 24 and data.startswith(b'\211PNG\r\n\032\n') and data[12:16] == b'IHDR':
             # PNGs
             imgtype = PNG
             w, h = struct.unpack(">LL", data[16:24])

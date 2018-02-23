@@ -12,7 +12,6 @@ IMAGE_FORMATS = 'jpg|jpeg|bmp|gif|png'
 MAX_WIDTH = 250
 MAX_HEIGHT = 250
 
-
 class HoverPreview(sublime_plugin.EventListener):
     def width_and_height_from_path(path, view):
         # Allow max automatic detection and remove gutter
