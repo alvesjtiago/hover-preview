@@ -1,0 +1,17 @@
+
+Hover Image Preview v0.0.19
+===========================
+
+## New Features
+
+    - you can now save previewd images
+    - you can now open downloaded images
+    - added svg support
+
+## Fixes
+    - 
+
+## Requirements
+    - Imagemagick is required for svg support
+     get it from https://www.imagemagick.org/script/download.php
+     make sure "magick" command is in your path
