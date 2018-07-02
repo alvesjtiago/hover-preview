@@ -37,27 +37,27 @@ Or manually create a folder named "hover-preview" on your Packages folder and co
 
 ### max_dimensions:
 
-- max\_width x max\_height for which the pop-up is considered too big and should be resized, (default: [250, 250])
+- max\_width x max\_height for which the pop-up is considered too big and should be resized, (default: [250, 250]).
 
 ### search_mode: 
 
-- `"project" (default):` searches for the hovered file name in the project
-- `"file":` joins the file path to the hovered file name and see if it makes a valid image path
+- `"project" (default):` searches for the hovered file name in the project.
+- `"file":` joins the file path to the hovered file name and see if it makes a valid image path.
 
 ### recursive:
 
-- `true (default)`: takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories)
-- `false`: sees if the hovered file name exists in the base folders of the project (directories only)
+- `true (default)`: takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories).
+- `false`: sees if the hovered file name exists in the base folders of the project (directories only).
 
 ### Notes
 
-- if `"recursive": true` the path part is irrelevant, if you don't like this behavior you can set this to false and/or set search_mode to "file"
-- "recursive" is only relevant if search_mode is set to "project"
+- if `"recursive": true` the path part is irrelevant, if you don't like this behavior you can set this to false and/or set `"search_mode"` to `"file"`.
+- `"recursive"` is only relevant if `"search_mode"` is set to `"project"`.
 
 ## Requirements
 
-- to preview svg file the plugin requires [Imagemagick](https://www.imagemagick.org/script/download.php)
-- make sure the `magick` command is in your path
+- to preview svg file the plugin requires [Imagemagick](https://www.imagemagick.org/script/download.php).
+- make sure the `magick` command is in your path.
 
 
 ## Contribute
