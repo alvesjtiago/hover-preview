@@ -1,16 +1,17 @@
 {
-    // max_width x max_height for wich the popup is considered too big
+    // max_width x max_height for wich the popup is considered too big and should be resized
     "max_dimensions": [250, 250],
-    // "project": search for the image name or the relative path to the image in the project
-    // 
-    // "file": search by concatenating the file path to the relative path to the image
-    // e.g: c:/Users/user and ./download/myimg.png and check if it exists
+
+    // "project": searches for the hovered file name in the project
+
+    // "file": joins the file path to the hovered file name and see
+    // if it makes a valid image path
     "search_mode": "project",
-    // performs a recursive search in the project
-    // only relevant if search_mode is set to "project"
-    // 
-    // note that only the image name part is considered, you can write anything before it 
-    // and the popup will show up if the search for the name is successful
-    // if you don't want such behaviour you can set search mode to "file"
+
+    // true:  takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories)
+    // Note that the path part is irrelevant, if you don't like this behavior you can set this to false and/or set search_mode to "file"
+
+    // false: sees if the hovered file name exists in the base folders of the project (directories only)
+    // Note that this setting is only relevant if search_mode is set to "project"
     "recursive": true
 }
