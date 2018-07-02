@@ -29,7 +29,7 @@ TEMPLATE = '''
 
 
 class HoverPreview(sublime_plugin.EventListener):
-    settings = sublime.load_settings('Hover Image Preview.sublime-settings')
+    settings = sublime.load_settings('Hover Preview.sublime-settings')
     max_width = 250
     max_height = 250
 
@@ -328,7 +328,7 @@ class HoverPreview(sublime_plugin.EventListener):
                     'max_dimensions', [250, 250])
             except:
                 HoverPreview.settings = sublime.load_settings(
-                    'Hover Image Preview.sublime-settings')
+                    'Hover Preview.sublime-settings')
                 HoverPreview.max_width, HoverPreview.max_height = HoverPreview.settings.get(
                     'max_dimensions', [250, 250])
 
