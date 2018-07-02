@@ -195,7 +195,7 @@ class HoverPreview(sublime_plugin.EventListener):
             png = os.path.splitext(tmp_file)[0] + '.png'
             name = os.path.splitext(name)[0] + '.png'
             # use the magick command of Imagemagick
-            subprocess.call(['magick', tmp_file, png], shell=True)
+            subprocess.call(['magick ' + tmp_file + ' ' + png], shell=True)
             tmp_file = png
             with open(tmp_file, "rb") as dst:
                 content = dst.read()
@@ -280,7 +280,7 @@ class HoverPreview(sublime_plugin.EventListener):
                 svg_name = name
                 tmp_file = os.path.join(tempfile.gettempdir(), "tmppng.png")
                 name = os.path.splitext(name)[0] + '.png'
-                subprocess.call(['magick', file_name, tmp_file], shell=True)
+                subprocess.call(['magick ' + file_name + ' ' + tmp_file], shell=True)
                 file_name = tmp_file
                 save_as = '<a href="save as png">Save As Png</a>'
 

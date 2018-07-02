@@ -35,21 +35,21 @@ Or manually create a folder named "hover-preview" on your Packages folder and co
 
 ## Configuration
 
-### max_dimensions:
+#### max_dimensions:
 
 - max\_width x max\_height for which the pop-up is considered too big and should be resized, (default: [250, 250]).
 
-### search_mode: 
+#### search_mode: 
 
 - `"project" (default):` searches for the hovered file name in the project.
 - `"file":` joins the file path to the hovered file name and see if it makes a valid image path.
 
-### recursive:
+#### recursive:
 
 - `true (default)`: takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories).
 - `false`: sees if the hovered file name exists in the base folders of the project (directories only).
 
-### Notes
+**Notes**
 
 - if `"recursive": true` the path part is irrelevant, if you don't like this behavior you can set this to false and/or set `"search_mode"` to `"file"`.
 - `"recursive"` is only relevant if `"search_mode"` is set to `"project"`.
