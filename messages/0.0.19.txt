@@ -17,5 +17,4 @@ Hover Image Preview v0.0.19
     - #24 : sublime text hangs for too long when hovering over a url
 
 ## Requirements
-    - Imagemagick is required for svg support, get it from https://www.imagemagick.org/script/download.php
-    - make sure "magick" command is in your path
+    - Imagemagick is required for svg support, get it from https://www.imagemagick.org/script/download.php and make sure "magick" command is in your path

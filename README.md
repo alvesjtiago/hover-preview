@@ -56,8 +56,7 @@ Or manually create a folder named "hover-preview" on your Packages folder and co
 
 ## Requirements
 
-- to preview svg file the plugin requires [Imagemagick](https://www.imagemagick.org/script/download.php).
-- make sure the `magick` command is in your path.
+- to preview svg file the plugin requires [Imagemagick](https://www.imagemagick.org/script/download.php) and that `magick` command is in your path.
 
 
 ## Contribute
