@@ -10,32 +10,43 @@ import tempfile
 import subprocess
 from .get_image_size import get_image_size, UnknownImageFormat
 
-IMAGE_PATH = re.compile(
-    r'([-@\w.]+\.(?:png|jpg|jpeg|bmp|gif|svg|svgz))', re.IGNORECASE)
-IMAGE_URL = re.compile(
-    r'(https?)?:?//[^"\']+/(.+?\.(?:png|jpg|jpeg|bmp|gif|svg|svgz))', re.IGNORECASE)
-SVG = ('.svg', '.svgz')
 TEMPLATE = '''
     <a href="resize">
         <img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s">
     </a>
     <div>%dx%d %dKB</div>
     <div>
-        <a href="open" style="text-decoration: none">Open</a>
-        <a href="save" style="text-decoration: none">Save</a>
-        %s
+        <a href="open">Open</a>|<a href="save">Save</a>%s|<a href="convert to..">Convert to..</a>
     </div>
     '''
 
+def magick(inp, out):
+    try:
+        subprocess.call(['magick', inp, out], shell=True)
+    except:
+        subprocess.call(['magick ' + img + ' ' + to], shell=True)
+
+def hp_callback():
+    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL
+    MAX_WIDTH, MAX_HEIGHT = settings.get('max_dimensions', [320, 240])
+    FORMAT_TO_CONVERT = tuple(settings.get('formats_to_convert', ['.svg', '.svgz', '.webp']))
+    ALL_FORMATS = "|".join(settings.get('all_formats', ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"]))
+    IMAGE_PATH = re.compile(r'([-@\w.]+\.(?:' + ALL_FORMATS + '))', re.IGNORECASE)
+    IMAGE_URL = re.compile(r'(https?)?:?//[^"\']+/([^"\']+?\.(?:' + ALL_FORMATS + '))', re.IGNORECASE)
+
+def plugin_loaded():
+    global settings
+    settings = sublime.load_settings('Hover Preview.sublime-settings')
+    settings.clear_on_change('hp')
+    hp_callback()
+    settings.add_on_change('hp', hp_callback)
 
 class HoverPreview(sublime_plugin.EventListener):
-    settings = sublime.load_settings('Hover Preview.sublime-settings')
-    max_width = 250
-    max_height = 250
 
     def width_and_height_from_path(self, path: str, view: sublime.View) -> (int, int):
         '''returns the width and height from the given path'''
         # Allow max automatic detection and remove gutter
+        view.show_popup
         max_width = view.viewport_extent()[0] - 60
         max_height = view.viewport_extent()[1] - 60
         max_ratio = max_height / max_width
@@ -59,16 +70,16 @@ class HoverPreview(sublime_plugin.EventListener):
         return (width, height)
 
     def fix_oversize(self, width: int, height: int) -> (int, int):
-        ''' Shrinks the popup if its bigger than HoverPreview.max_width x HoverPreview.max_height'''
+        ''' Shrinks the popup if its bigger than max_width x max_height'''
         new_width, new_height = width, height
-        if width > HoverPreview.max_width or height > HoverPreview.max_height:
+        if width > MAX_WIDTH or height > MAX_HEIGHT:
             if width > height:
-                ratio = HoverPreview.max_width / width
-                new_width = HoverPreview.max_width
+                ratio = MAX_WIDTH / width
+                new_width = MAX_WIDTH
                 new_height = height * ratio
             else:
-                ratio = HoverPreview.max_height / height
-                new_height = HoverPreview.max_height
+                ratio = MAX_HEIGHT / height
+                new_height = MAX_HEIGHT
                 new_width = width * ratio
         return (new_width, new_height)
 
@@ -162,6 +173,13 @@ class HoverPreview(sublime_plugin.EventListener):
             shutil.copyfile(file, copy)
         sublime.status_message("%s saved in %s" % (name, dst))
 
+    def convert(self, file: str, name=None):
+        window = sublime.active_window()
+        basename, format = os.path.splitext(name if name else os.path.basename(file))
+        all_formats = ALL_FORMATS.split('|')
+        all_formats.remove(format[1:])
+        window.show_quick_panel(all_formats, lambda i: magick(file, os.path.join(window.folders()[0], 'HovImgPrev', basename + '.' + all_formats[i])) if i != -1 else None)
+
     def handle_url(self, view: sublime.View, point: int, path: str, name: str) -> None:
         try:
             try:
@@ -180,22 +198,23 @@ class HoverPreview(sublime_plugin.EventListener):
             print(e)
             return
         # (https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg)
-        is_svg = name.endswith(SVG)
+        need_magick = name.endswith(FORMAT_TO_CONVERT)
+        basename, ext = os.path.splitext(name)
         tmp_file = os.path.join(
-            tempfile.gettempdir(), "tmp_image.png" if not is_svg else 'tmp_image.svg')
+            tempfile.gettempdir(), 'tmp_image' + ext if need_magick else "tmp_image.png")
         content = f.read()
         with open(tmp_file, "wb") as dst:
             dst.write(content)
-        # if it's an svg file we need to save it, convert it then read data from the resulting png
+        # if the file needs conversion, convert it then read data from the resulting png
         save_as = ''
-        if is_svg:
-            save_as = '<a href="save as png">Save As Png</a>'
-            svg_file = tmp_file
-            svg_name = name
+        if need_magick:
+            save_as = '|<a href="save as png">Save as png</a>'
+            conv_file = tmp_file
+            conv_name = name
             png = os.path.splitext(tmp_file)[0] + '.png'
-            name = os.path.splitext(name)[0] + '.png'
+            name = basename + '.png'
             # use the magick command of Imagemagick
-            subprocess.call(['magick ' + tmp_file + ' ' + png], shell=True)
+            magick(tmp_file, png)
             tmp_file = png
             with open(tmp_file, "rb") as dst:
                 content = dst.read()
@@ -203,17 +222,20 @@ class HoverPreview(sublime_plugin.EventListener):
         real_width, real_height, size = get_image_size(tmp_file)
         width, height = self.width_and_height_from_path(tmp_file, view)
         encoded = str(base64.b64encode(content), "utf-8")
+
         def on_navigate(href):
             if href == 'resize':
                 self.resize(view, width, height, real_width,
                             real_height, size, encoded, 'too_bigu', save_as)
             elif href == 'save':
-                if not is_svg:
+                if not need_magick:
                     self.save(href, tmp_file, name, 'too_bigu')
                 else:
-                    self.save(href, svg_file, svg_name, 'too_bigu')
+                    self.save(href, conv_file, conv_name, 'too_bigu')
             elif href == 'save as png':
                 self.save(href, tmp_file, name, 'too_bigu')
+            elif href == 'convert to..':
+                self.convert(conv_file if need_magick else tmp_file, conv_name if need_magick else name)
             else:
                 sublime.active_window().run_command(
                     'open_file', {'file': tmp_file})
@@ -238,11 +260,10 @@ class HoverPreview(sublime_plugin.EventListener):
                 file_name = path
 
             # if search_mode: "project", search only in project
-            elif HoverPreview.settings.get('search_mode') == "project":
-                in_project = True
+            elif settings.get('search_mode') == "project":
                 # Get base project folders
                 base_folders = sublime.active_window().folders()
-                if HoverPreview.settings.get('recursive'):
+                if settings.get('recursive'):
                     path = name
                     file_name = ""
                     break_now = False
@@ -256,6 +277,7 @@ class HoverPreview(sublime_plugin.EventListener):
                                 if file.endswith(path):
                                     file_name = os.path.join(root, file)
                                     break_now = True
+                                    in_project = True
                                     break
                 else:
                     # search only in base folders for the relative path
@@ -263,6 +285,7 @@ class HoverPreview(sublime_plugin.EventListener):
                         file_name = os.path.normpath(
                             os.path.join(base_folder, path))
                         if os.path.exists(file_name):
+                            in_project = True
                             break
             # if search_mode: "file" join the relative path to the file path
             else:
@@ -274,15 +297,15 @@ class HoverPreview(sublime_plugin.EventListener):
         # Check that file exists
         if os.path.isfile(file_name):
             save_as = ''
-            is_svg = file_name.endswith(SVG)
-            if is_svg:
-                svg_file = file_name
-                svg_name = name
+            need_magick = file_name.endswith(FORMAT_TO_CONVERT)
+            if need_magick:
+                conv_file = file_name
+                conv_name = name
                 tmp_file = os.path.join(tempfile.gettempdir(), "tmppng.png")
                 name = os.path.splitext(name)[0] + '.png'
-                subprocess.call(['magick ' + file_name + ' ' + tmp_file], shell=True)
+                magick(file_name, tmp_file)
                 file_name = tmp_file
-                save_as = '<a href="save as png">Save As Png</a>'
+                save_as = '|<a href="save as png">Save as png</a>'
 
             with open(file_name, "rb") as f:
                 encoded = str(base64.b64encode(f.read()), "utf-8")
@@ -295,14 +318,14 @@ class HoverPreview(sublime_plugin.EventListener):
                     self.resize(view, width, height, real_width,
                                 real_height, size, encoded, 'too_bigf', save_as)
                 elif href == 'save':
-                    if not is_svg:
-                        self.save(href, file_name, name,
-                                  'too_bigf', in_project)
+                    if not need_magick:
+                        self.save(href, file_name, name, 'too_bigf', in_project)
                     else:
-                        self.save(href, svg_file, svg_name,
-                                  'too_bigf', in_project)
+                        self.save(href, conv_file, conv_name, 'too_bigf')
                 elif href == 'save as png':
-                    self.save(href, file_name, name, 'too_bigf', in_project)
+                    self.save(href, file_name, name, 'too_bigf')
+                elif href == 'convert to..':
+                    self.convert(file_name)
                 else:
                     sublime.active_window().run_command(
                         'open_file', {'file': file_name})
@@ -318,31 +341,23 @@ class HoverPreview(sublime_plugin.EventListener):
             self.too_bigf = True
 
     def on_hover(self, view: sublime.View, point: int, hover_zone: int) -> None:
-        if hover_zone == sublime.HOVER_TEXT:
-            path = self.get_path(view, point)
-            if not path:
-                return
-            # ST is sometimes unable to read the settings file
-            try:
-                HoverPreview.max_width, HoverPreview.max_height = HoverPreview.settings.get(
-                    'max_dimensions', [250, 250])
-            except:
-                HoverPreview.settings = sublime.load_settings(
-                    'Hover Preview.sublime-settings')
-                HoverPreview.max_width, HoverPreview.max_height = HoverPreview.settings.get(
-                    'max_dimensions', [250, 250])
+        if hover_zone != sublime.HOVER_TEXT:
+            return
+        path = self.get_path(view, point)
+        if not path:
+            return
 
-            image = IMAGE_URL.match(path)
-            # if it's an image url handle_url
-            if image:
-                image = image.groups()
-                # if the url doesn't start with http or https try adding it
-                # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
-                if not image[0]:
-                    path = 'http://' + path.lstrip('/')
-                # don't block the app while handling the url
-                sublime.set_timeout_async(lambda: self.handle_url(
-                    view, point, path, image[1]), 0)
-            # if it's not an image url handle_file
-            else:
-                self.handle_file(view, point, path)
+        image = IMAGE_URL.match(path)
+        # if it's an image url handle_url
+        if image:
+            image = image.groups()
+            # if the url doesn't start with http or https try adding it
+            # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
+            if not image[0]:
+                path = 'http://' + path.lstrip('/')
+            # don't block the app while handling the url
+            sublime.set_timeout_async(lambda: self.handle_url(
+                view, point, path, image[1]), 0)
+        # if it's not an image url handle_file
+        else:
+            self.handle_file(view, point, path)
