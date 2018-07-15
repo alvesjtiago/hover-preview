@@ -24,7 +24,7 @@ def magick(inp, out):
     try:
         subprocess.call(['magick', inp, out], shell=True)
     except:
-        subprocess.call(['magick ' + img + ' ' + to], shell=True)
+        subprocess.call(['magick ' + inp + ' ' + out], shell=True)
 
 def hp_callback():
     global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL
