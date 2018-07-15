@@ -1,0 +1,14 @@
+
+Hover Image Preview v0.0.20
+===========================
+
+## New Features
+
+    - added support for "ico" and "webp" image formats
+    - added a "convert to.." option to convert from one image format to another
+    - you can now add more image formats through the settings
+    - better link style
+
+## Fixes
+    - "imgname.ext is already in $PATH_TO_TEMP_DIR/tmp_image.ext" on save error
+    - platform dependent handling of the conversion command
