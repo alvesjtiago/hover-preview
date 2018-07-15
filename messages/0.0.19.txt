@@ -8,6 +8,7 @@ Hover Image Preview v0.0.19
     - you can now open downloaded images
     - added svg support
     - added support for absolute paths
+    - added support for a wider range of urls
     - added search modes
     - downloading and rendering images is non blocking
 
