@@ -324,7 +324,7 @@ class HoverPreview(sublime_plugin.EventListener):
                 elif href == 'save as png':
                     self.save(href, file_name, name, 'too_bigf')
                 elif href == 'convert to..':
-                    self.convert(file_name)
+                    self.convert(conv_file if need_magick else file_name)
                 else:
                     sublime.active_window().run_command(
                         'open_file', {'file': file_name})
