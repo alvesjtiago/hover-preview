@@ -2,7 +2,7 @@
 
 A Sublime Text 3 plugin to preview images simply by hovering on a file name or an image url.
 
-![Screenshot of Hover Preview, a plugin for Sublime Text 3 by @alvesjtiago](http://i.imgur.com/cNt8Kv5.jpg)
+![Screenshot of Hover Preview, a plugin for Sublime Text 3 by @alvesjtiago](hover_preview.png)
 
 ## Installation
 
