@@ -46,7 +46,6 @@ class HoverPreview(sublime_plugin.EventListener):
     def width_and_height_from_path(self, path: str, view: sublime.View) -> (int, int):
         '''returns the width and height from the given path'''
         # Allow max automatic detection and remove gutter
-        view.show_popup
         max_width = view.viewport_extent()[0] - 60
         max_height = view.viewport_extent()[1] - 60
         max_ratio = max_height / max_width
