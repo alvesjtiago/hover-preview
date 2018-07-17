@@ -16,15 +16,12 @@ TEMPLATE = '''
     </a>
     <div>%dx%d %dKB</div>
     <div>
-        <a href="open">Open</a>|<a href="save">Save</a>%s|<a href="convert to..">Convert to..</a>
+        <a href="open">Open</a> | <a href="save">Save</a>%s | <a href="convert_to">Convert</a>
     </div>
     '''
 
 def magick(inp, out):
-    try:
-        subprocess.call(['magick', inp, out], shell=True)
-    except:
-        subprocess.call(['magick ' + inp + ' ' + out], shell=True)
+    subprocess.call(['magick', inp, out])
 
 def hp_callback():
     global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL
@@ -177,7 +174,10 @@ class HoverPreview(sublime_plugin.EventListener):
         basename, format = os.path.splitext(name if name else os.path.basename(file))
         all_formats = ALL_FORMATS.split('|')
         all_formats.remove(format[1:])
-        window.show_quick_panel(all_formats, lambda i: magick(file, os.path.join(window.folders()[0], 'HovImgPrev', basename + '.' + all_formats[i])) if i != -1 else None)
+        folder_path = os.path.join(window.folders()[0], 'HovImgPrev')
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        window.show_quick_panel(all_formats, lambda i: magick(file, os.path.join(folder_path, basename + '.' + all_formats[i])) if i != -1 else None)
 
     def handle_url(self, view: sublime.View, point: int, path: str, name: str) -> None:
         try:
@@ -207,7 +207,7 @@ class HoverPreview(sublime_plugin.EventListener):
         # if the file needs conversion, convert it then read data from the resulting png
         save_as = ''
         if need_magick:
-            save_as = '|<a href="save as png">Save as png</a>'
+            save_as = ' | <a href="save as png">Save as png</a>'
             conv_file = tmp_file
             conv_name = name
             png = os.path.splitext(tmp_file)[0] + '.png'
@@ -233,7 +233,7 @@ class HoverPreview(sublime_plugin.EventListener):
                     self.save(href, conv_file, conv_name, 'too_bigu')
             elif href == 'save as png':
                 self.save(href, tmp_file, name, 'too_bigu')
-            elif href == 'convert to..':
+            elif href == 'convert_to':
                 self.convert(conv_file if need_magick else tmp_file, conv_name if need_magick else name)
             else:
                 sublime.active_window().run_command(
@@ -304,7 +304,7 @@ class HoverPreview(sublime_plugin.EventListener):
                 name = os.path.splitext(name)[0] + '.png'
                 magick(file_name, tmp_file)
                 file_name = tmp_file
-                save_as = '|<a href="save as png">Save as png</a>'
+                save_as = ' | <a href="save as png">Save as png</a>'
 
             with open(file_name, "rb") as f:
                 encoded = str(base64.b64encode(f.read()), "utf-8")
@@ -323,7 +323,7 @@ class HoverPreview(sublime_plugin.EventListener):
                         self.save(href, conv_file, conv_name, 'too_bigf')
                 elif href == 'save as png':
                     self.save(href, file_name, name, 'too_bigf')
-                elif href == 'convert to..':
+                elif href == 'convert_to':
                     self.convert(conv_file if need_magick else file_name)
                 else:
                     sublime.active_window().run_command(
