@@ -21,7 +21,10 @@ TEMPLATE = '''
     '''
 
 def magick(inp, out):
-    subprocess.call(['magick', inp, out])
+    if os.name == 'nt':
+        subprocess.call(['magick', inp, out], shell=True)
+    else:
+        subprocess.call(['magick', inp, out])
 
 def hp_callback():
     global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL
