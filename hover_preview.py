@@ -44,10 +44,7 @@ def plugin_loaded():
     settings.add_on_change("hover_preview", hover_preview_callback)
 
 def magick(inp, out):
-    if os.name == "nt":
-        subprocess.call(["magick", inp, out], shell=True)
-    else:
-        subprocess.call(["magick", inp, out])
+    subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 def get_dimensions(view: sublime.View, path: str) -> (int, int):
     """ returns the width and height from the given path """
