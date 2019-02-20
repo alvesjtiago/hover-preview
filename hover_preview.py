@@ -183,7 +183,7 @@ def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
     for base_folder in base_folders:
         for root, dirs, files in os.walk(base_folder):
             for f in files:
-                if f.endswith(name):
+                if f == name:
                     sublime.status_message("%s is already in %s" % (name, root))
                     return
     try:
