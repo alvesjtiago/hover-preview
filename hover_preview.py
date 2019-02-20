@@ -47,17 +47,18 @@ def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 def get_dimensions(view: sublime.View, path: str) -> (int, int):
-    """ returns the width and height from the given path """
+    """Return the width and height from the given path."""
     # Allow max automatic detection and remove gutter
-    max_width = view.viewport_extent()[0] - 60
-    max_height = view.viewport_extent()[1] - 60
+    max_width, max_height = view.viewport_extent()
+    max_width *= 0.75
+    max_height *= 0.75
     max_ratio = max_height / max_width
 
     # Get image get_dimensions
     try:
         width, height, _ = get_image_size(path)
     except UnknownImageFormat:
-        width, height = -1, -1
+        return (-1, -1)
 
     # First check height since it's the smallest vector
     if height / width >= max_ratio and height > max_height:
