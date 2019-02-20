@@ -73,7 +73,7 @@ def get_dimensions(view: sublime.View, path: str) -> (int, int):
     return (width, height)
 
 def fix_oversize(width: int, height: int) -> (int, int):
-    ''' Shrinks the popup if its bigger than max_width x max_height '''
+    """Shrink the popup if its bigger than max_width x max_height."""
     new_width, new_height = width, height
     if width > MAX_WIDTH or height > MAX_HEIGHT:
         if width > height:
@@ -87,6 +87,7 @@ def fix_oversize(width: int, height: int) -> (int, int):
     return (new_width, new_height)
 
 def get_string(view: sublime.View, point: int) -> str:
+    """Return the string of the region containing `point` and delimeted by "", '' or ()."""
     next_double_quote = view.find('"', point).a
     next_single_quote = view.find("'", point).a
     next_parentheses = view.find(r"\)", point).a
@@ -113,10 +114,7 @@ def get_string(view: sublime.View, point: int) -> str:
     symbol = symbols_dict[closest_symbol]
 
     # All quotes in view
-    if symbol == ')':
-        all_quotes = view.find_all(r"\(|\)")
-    else:
-        all_quotes = view.find_all(symbol)
+    all_quotes = view.find_all(r"\(|\)" if symbol == ')' else symbol)
 
     # Get the final region of quoted string
     for item in all_quotes:
@@ -210,7 +208,6 @@ def convert(file: str, name=None):
     window.show_quick_panel(all_formats, on_done)
 
 class HoverPreview(sublime_plugin.EventListener):
-    __slots__ = ("file_popup_is_large", "url_popup_is_large")
 
     def __init__(self):
         self.file_popup_is_large = True
@@ -225,13 +222,13 @@ class HoverPreview(sublime_plugin.EventListener):
         # FIXME: avoid nested try-except clauses
         try:
             try:
-                f = urllib.request.urlopen(urllib.parse.unquote(string))  # <==
+                f = urlopen(unquote(string))  # <==
             except:
                 try:
-                    url_path = urllib.parse.quote(string).replace("%3A", ':', 1)
-                    f = urllib.request.urlopen(url_path)
+                    url_path = quote(string).replace("%3A", ':', 1)
+                    f = urlopen(url_path)
                 except:
-                    f = urllib.request.urlopen(string)
+                    f = urlopen(string)
         # don't fill the console with stack-trace when there`s no connection !!
         except Exception as e:
             print(e)
@@ -328,7 +325,7 @@ class HoverPreview(sublime_plugin.EventListener):
         # if file doesn't exist, return
         if not os.path.isfile(file):
             return
-        
+
         # does the file need conversion ?
         need_conversion = file.endswith(FORMAT_TO_CONVERT)
         save_as = ""
@@ -345,7 +342,7 @@ class HoverPreview(sublime_plugin.EventListener):
             # create a temporary file
             tmp_file = os.path.join(tempfile.gettempdir(), "tmp_png.png")
             name = os.path.splitext(name)[0] + ".png"
-            
+
             # use the magick command of Imagemagick to convert the image to png
             magick(file, tmp_file)
 
