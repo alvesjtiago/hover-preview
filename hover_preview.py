@@ -1,15 +1,17 @@
 import base64
 import re
 import os
-import shutil
-import urllib.parse
-import urllib.request
 import tempfile
 import subprocess
-from .get_image_size import get_image_size, UnknownImageFormat
+import shutil
+from urllib.parse import quote, unquote
+from urllib.request import urlopen
 
 import sublime
 import sublime_plugin
+
+from .get_image_size import get_image_size, UnknownImageFormat
+
 
 TEMPLATE = """
     <a href="resize">
