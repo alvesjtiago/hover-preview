@@ -21,25 +21,25 @@ TEMPLATE = """
     </div>
     """
 
-def hp_callback():
-    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL, IMAGE_FOLDER_NAME
+def hover_preview_callback():
+    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL, IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE
 
+    default_formats = ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"]
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
-    FORMAT_TO_CONVERT = tuple(settings.get("formats_to_convert",
-                                           [".svg", ".svgz", ".webp"]))
-    ALL_FORMATS = "|".join(settings.get('all_formats', ["png", "jpg", "jpeg",
-                                        "bmp", "gif", "ico", "svg", "svgz",
-                                        "webp"]))
+    FORMAT_TO_CONVERT = tuple(settings.get("formats_to_convert", [".svg", ".svgz", ".webp"]))
+    ALL_FORMATS = "|".join(settings.get('all_formats', default_formats))
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
-    IMAGE_PATH = re.compile(r'([-@\w.]+\.(?:' + ALL_FORMATS + '))')
-    IMAGE_URL = re.compile(r'(https?)?:?//[^"\']+/([^"\']+?\.(?:' + ALL_FORMATS + '))')
+    SEARCH_MODE = settings.get("search_mode", "project")
+    RECURSIVE = settings.get("recursive", True)
+    IMAGE_PATH = re.compile(r"([-@\w.]+\.(?:" + ALL_FORMATS + "))")
+    IMAGE_URL = re.compile(r"(https?)?:?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
 
 def plugin_loaded():
     global settings
     settings = sublime.load_settings("Hover Preview.sublime-settings")
-    settings.clear_on_change("hp")
-    hp_callback()
-    settings.add_on_change("hp", hp_callback)
+    settings.clear_on_change("hover_preview")
+    hover_preview_callback()
+    settings.add_on_change("hover_preview", hover_preview_callback)
 
 def magick(inp, out):
     if os.name == "nt":
@@ -138,7 +138,7 @@ def get_string(view: sublime.View, point: int) -> str:
 
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
     """
-    try to get a file from the given `string` and tests whether it's in the
+    try to get a file from the given `string` and test whether it's in the
     project directory
     """
     # if it's an absolute path get it
@@ -146,17 +146,17 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
         return (string, False)
 
     # if search_mode: "project", search only in project
-    elif settings.get("search_mode") == "project":
+    elif SEARCH_MODE == "project":
         # in_project = True
         # Get base project folders
         base_folders = sublime.active_window().folders()
         # if "recursive": true, recursively search for the name
-        if settings.get("recursive"):
+        if RECURSIVE:
             for base_folder in base_folders:
                 for root, dirs, files in os.walk(base_folder):
                     for file in files:
                         # Find the first file that matches string
-                        if file.endswith(name):
+                        if file == name:
                             return (os.path.join(root, file), True)
             return ("", True)
         else:
