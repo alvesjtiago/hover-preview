@@ -24,6 +24,7 @@ TEMPLATE = """
     """
 
 def hover_preview_callback():
+    """Get the settings and store them in global variables."""
     global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL, IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE
 
     default_formats = ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"]
@@ -136,8 +137,8 @@ def get_string(view: sublime.View, point: int) -> str:
 
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
     """
-    try to get a file from the given `string` and test whether it's in the
-    project directory
+    Try to get a file from the given `string` and test whether it's in the
+    project directory.
     """
     # if it's an absolute path get it
     if os.path.isabs(string):
@@ -169,6 +170,7 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
             os.path.dirname(view.file_name()), string)), False)
 
 def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
+    """Save the image if it's not already in the project folder."""
     base_folders = sublime.active_window().folders()
     dst = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
     copy = os.path.join(dst, name)
@@ -192,6 +194,7 @@ def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
     sublime.status_message("%s saved in %s" % (name, dst))
 
 def convert(file: str, name=None):
+    """Convert the image to the format chosen from the quick panel."""
     window = sublime.active_window()
     basename, format = os.path.splitext(name or os.path.basename(file))
     all_formats = ALL_FORMATS.split('|')
@@ -214,7 +217,7 @@ class HoverPreview(sublime_plugin.EventListener):
         self.url_popup_is_large = True
 
     def handle_as_url(self, view: sublime.View, point: int, string: str, name: str) -> None:
-        """ Handles the given `string` as a url """
+        """Handle the given `string` as a url."""
         # Let's assume this url as input:
         # (https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg)
 
@@ -312,7 +315,7 @@ class HoverPreview(sublime_plugin.EventListener):
         self.url_popup_is_large = True
 
     def handle_as_file(self, view: sublime.View, point: int, string: str) -> None:
-        """ handles the given `string` as a file """
+        """Handle the given `string` as a file."""
         # "hover_preview.png"
 
         name = os.path.basename(string)
