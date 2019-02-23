@@ -23,9 +23,11 @@ TEMPLATE = """
     </div>
     """
 
+IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/]+={0,2})")
+
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
-    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH, IMAGE_URL, IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE
+    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH_RE, IMAGE_URL_RE, IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE
 
     default_formats = ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"]
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
@@ -34,8 +36,8 @@ def hover_preview_callback():
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
     SEARCH_MODE = settings.get("search_mode", "project")
     RECURSIVE = settings.get("recursive", True)
-    IMAGE_PATH = re.compile(r"([-@\w.]+\.(?:" + ALL_FORMATS + "))")
-    IMAGE_URL = re.compile(r"(https?)?:?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
+    IMAGE_PATH_RE = re.compile(r"([-@\w.]+\.(?:" + ALL_FORMATS + "))")
+    IMAGE_URL_RE = re.compile(r"(?:(https?):)?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
 
 def plugin_loaded():
     global settings
@@ -215,6 +217,7 @@ class HoverPreview(sublime_plugin.EventListener):
     def __init__(self):
         self.file_popup_is_large = True
         self.url_popup_is_large = True
+        self.data_url_popup_is_large = True
 
     def handle_as_url(self, view: sublime.View, point: int, string: str, name: str) -> None:
         """Handle the given `string` as a url."""
@@ -314,6 +317,57 @@ class HoverPreview(sublime_plugin.EventListener):
         # the url-based image's popup is too big
         self.url_popup_is_large = True
 
+    def handle_as_data_url(self, view: sublime.View, point: int, ext: str, encoded: str) -> None:
+        # Let's assume this url as input:
+
+        # create a temporary file
+        tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)  # => "TEMPDIR/tmp_image.svg"
+        name = "myfile." + ext
+        try:
+            dst = open(tmp_file, "wb")
+            dst.write(base64.b64decode(encoded))
+        except Exception as e:
+            print(e)
+            return
+        finally:
+            dst.close()
+
+        # Save downloaded data in the temporary file
+
+        real_width, real_height, size = get_image_size(tmp_file)
+        width, height = get_dimensions(view, tmp_file)
+
+        def on_navigate(href):
+            if href == "resize":
+                if self.data_url_popup_is_large:
+                    self.data_url_popup_is_large = False
+                    new_width, new_height = fix_oversize(width, height)
+                    view.update_popup(TEMPLATE % (new_width, new_height, encoded,
+                                                  real_width, real_height,
+                                                  size // 1024, ""))
+                else:
+                    self.data_url_popup_is_large = True
+                    view.update_popup(TEMPLATE % (width, height, encoded,
+                                                  real_width, real_height,
+                                                  size // 1024, ""))
+            elif href == "save":
+                save(href, tmp_file, name, "data_url")
+            elif href == "convert_to":
+                convert(tmp_file, name)
+            else:
+                sublime.active_window().open_file(tmp_file)
+
+        view.show_popup(
+            TEMPLATE % (width, height, encoded, real_width,
+                        real_height, size // 1024, ""),
+            sublime.HIDE_ON_MOUSE_MOVE_AWAY,
+            point,
+            *view.viewport_extent(),
+            on_navigate=on_navigate
+        )
+        # the url-based image's popup is too big
+        self.data_url_popup_is_large = True
+
     def handle_as_file(self, view: sublime.View, point: int, string: str) -> None:
         """Handle the given `string` as a file."""
         # "hover_preview.png"
@@ -400,17 +454,23 @@ class HoverPreview(sublime_plugin.EventListener):
         if not string:
             return
 
-        image = IMAGE_URL.match(string)
+        image_data_url = IMAGE_DATA_URL_RE.match(string)
+        # if it's a image data url handle as data url
+        if image_data_url:
+            ext, encoded = image_data_url.groups()
+            return self.handle_as_data_url(view, point, ext, encoded)
+
+        image_url = IMAGE_URL_RE.match(string)
         # if it's an image url handle as url
-        if image:
-            image = image.groups()
+        if image_url:
+            protocol, name = image_url.groups()
             # if the url doesn't start with http or https try adding it
             # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
-            if not image[0]:
+            if not protocol:
                 string = "http://" + string.lstrip('/')
             # don't block the app while handling the url
             sublime.set_timeout_async(lambda: self.handle_as_url(
-                view, point, string, image[1]), 0)
+                view, point, string, name), 0)
         # if it's not an image url handle as file
         else:
             self.handle_as_file(view, point, string)
