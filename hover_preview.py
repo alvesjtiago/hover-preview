@@ -147,6 +147,13 @@ def get_string(view: sublime.View, point: int) -> str:
     # String path for file
     return view.substr(sublime.Region(initial_region.b, final_region.a))
 
+def check_recursive(base_folders, name):
+    for base_folder in base_folders:
+        for root, dirs, files in os.walk(base_folder):
+            for f in files:
+                if f == name:
+                    return root
+
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
     """
     Try to get a file from the given `string` and test whether it's in the
@@ -163,12 +170,8 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
         base_folders = sublime.active_window().folders()
         # if "recursive": true, recursively search for the name
         if RECURSIVE:
-            for base_folder in base_folders:
-                for root, dirs, files in os.walk(base_folder):
-                    for file in files:
-                        if file == name:
-                            return (os.path.join(root, file), True)
-            return ("", True)
+            root = check_recursive(base_folders, name)
+            return (os.path.join(root, name) if root else "", True)
         else:
             # search only in base folders for the relative path
             for base_folder in base_folders:
@@ -191,12 +194,10 @@ def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
     if kind == "file" and in_project:
         sublime.status_message("%s is already in %s" % (name, os.path.dirname(file)))
         return
-    for base_folder in base_folders:
-        for root, dirs, files in os.walk(base_folder):
-            for f in files:
-                if f == name:
-                    sublime.status_message("%s is already in %s" % (name, root))
-                    return
+    root = check_recursive(base_folders, name)
+    if root:
+        sublime.status_message("%s is already in %s" % (name, root))
+        return
     try:
         shutil.copyfile(file, copy)
     except:
