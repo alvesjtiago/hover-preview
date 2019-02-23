@@ -8,5 +8,4 @@
 
 Thanks for installing Hover Image Preview. We hope it will make your life a little easier :)
 
-Hover here please:
-    'http://justsomething.co/wp-content/uploads/2013/11/guns-replaced-thumbs-up-20.jpg'
+'http://justsomething.co/wp-content/uploads/2013/11/guns-replaced-thumbs-up-20.jpg'

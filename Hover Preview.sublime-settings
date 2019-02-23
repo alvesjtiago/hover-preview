@@ -8,6 +8,9 @@
     // if it makes a valid image path
     "search_mode": "project",
 
+    // the name of the folder in wich saved images will be stored
+    "image_folder_name": "Hovered Images",
+
     // all image formats to look for
     "all_formats": ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"],
 
