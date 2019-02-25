@@ -3,7 +3,6 @@ Hover Image Preview v0.0.19
 ===========================
 
 ## New Features
-
     - you can now save previewed images
     - you can now open downloaded images
     - added svg support

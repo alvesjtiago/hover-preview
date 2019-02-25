@@ -3,7 +3,6 @@ Hover Image Preview v0.0.20
 ===========================
 
 ## New Features
-
     - added support for "ico" and "webp" image formats
     - added a "convert to.." option to convert from one image format to another
     - you can now add more image formats through the settings
