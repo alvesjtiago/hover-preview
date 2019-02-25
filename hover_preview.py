@@ -333,9 +333,9 @@ class HoverPreview(sublime_plugin.EventListener):
         # "data:image/gif;base64,R0lGODlhEAAOALMAAOazToeHh0tLS/7LZv/0jvb29t/f3//Ub//ge8WSLf/rhf/3kdbW1mxsbP//mf///yH5BAAAAAAALAAAAAAQAA4AAARe8L1Ekyky67QZ1hLnjM5UUde0ECwLJoExKcppV0aCcGCmTIHEIUEqjgaORCMxIC6e0CcguWw6aFjsVMkkIr7g77ZKPJjPZqIyd7sJAgVGoEGv2xsBxqNgYPj/gAwXEQA7"
 
         # create a temporary file
-        tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)  # => "TEMPDIR/tmp_image.svg"
-        file_hash = int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
-        name = str(file_hash) + "." + ext
+        tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)  # => "TEMPDIR/tmp_data_image.gif"
+        file_hash = int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8)  # => 8918007
+        name = str(file_hash) + "." + ext  # => "8918007.gif"
 
         # Save downloaded data in the temporary file
         try:
