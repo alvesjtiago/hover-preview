@@ -4,6 +4,7 @@ import os
 import tempfile
 import subprocess
 import shutil
+import hashlib
 from urllib.parse import quote, unquote
 from urllib.request import urlopen
 
@@ -333,7 +334,8 @@ class HoverPreview(sublime_plugin.EventListener):
 
         # create a temporary file
         tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)  # => "TEMPDIR/tmp_image.svg"
-        name = "myfile." + ext
+        file_hash = int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
+        name = str(file_hash) + "." + ext
 
         # Save downloaded data in the temporary file
         try:
