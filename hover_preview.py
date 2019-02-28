@@ -34,34 +34,46 @@ DATA_URL_TEMPLATE = """
     </div>
     """
 
-IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/]+={0,2})")
+IMAGE_DATA_URL_RE = re.compile(
+    r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/]+={0,2})")
+
 
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
-    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS, IMAGE_PATH_RE, IMAGE_URL_RE, IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE
 
-    default_formats = ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"]
+    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS,\
+        IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE, IMAGE_PATH_RE, IMAGE_URL_RE
+
+    default_formats = ["png", "jpg", "jpeg",
+                       "bmp", "gif", "ico", "svg", "svgz", "webp"]
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
-    FORMAT_TO_CONVERT = tuple(settings.get("formats_to_convert", [".svg", ".svgz", ".webp"]))
+    FORMAT_TO_CONVERT = tuple(settings.get(
+        "formats_to_convert", [".svg", ".svgz", ".webp"]))
     ALL_FORMATS = "|".join(settings.get('all_formats', default_formats))
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
     SEARCH_MODE = settings.get("search_mode", "project")
     RECURSIVE = settings.get("recursive", True)
     IMAGE_PATH_RE = re.compile(r"([-@\w.]+\.(?:" + ALL_FORMATS + "))")
-    IMAGE_URL_RE = re.compile(r"(?:(https?):)?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
+    IMAGE_URL_RE = re.compile(
+        r"(?:(https?):)?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
+
 
 def plugin_loaded():
     global settings
+
     settings = sublime.load_settings("Hover Preview.sublime-settings")
     settings.clear_on_change("hover_preview")
     hover_preview_callback()
     settings.add_on_change("hover_preview", hover_preview_callback)
 
+
 def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
+
 def get_dimensions(view: sublime.View, path: str) -> (int, int):
     """Return the width and height from the given path."""
+
     # Allow max automatic detection and remove gutter
     max_width, max_height = view.viewport_extent()
     max_width *= 0.75
@@ -86,8 +98,10 @@ def get_dimensions(view: sublime.View, path: str) -> (int, int):
 
     return (width, height)
 
+
 def fix_oversize(width: int, height: int) -> (int, int):
     """Shrink the popup if its bigger than max_width x max_height."""
+
     new_width, new_height = width, height
     if width > MAX_WIDTH or height > MAX_HEIGHT:
         if width > height:
@@ -100,8 +114,10 @@ def fix_oversize(width: int, height: int) -> (int, int):
             new_width = width * ratio
     return (new_width, new_height)
 
+
 def get_string(view: sublime.View, point: int) -> str:
     """Return the string of the region containing `point` and delimeted by "", '' or ()."""
+
     next_double_quote = view.find('"', point).a
     next_single_quote = view.find("'", point).a
     next_parentheses = view.find(r"\)", point).a
@@ -148,18 +164,23 @@ def get_string(view: sublime.View, point: int) -> str:
     # String path for file
     return view.substr(sublime.Region(initial_region.b, final_region.a))
 
+
 def check_recursive(base_folders, name):
+    """Return the path to the file if it is present in the project."""
+
     for base_folder in base_folders:
         for root, dirs, files in os.walk(base_folder):
             for f in files:
                 if f == name:
                     return root
 
+
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
     """
     Try to get a file from the given `string` and test whether it's in the
     project directory.
     """
+
     # if it's an absolute path get it
     if os.path.isabs(string):
         return (string, False)
@@ -184,8 +205,10 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
         return (os.path.normpath(os.path.join(
             os.path.dirname(view.file_name()), string)), False)
 
+
 def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
     """Save the image if it's not already in the project folder."""
+
     base_folders = sublime.active_window().folders()
     dst = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
     copy = os.path.join(dst, name)
@@ -193,7 +216,8 @@ def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
         sublime.status_message("%s is already in %s" % (name, dst))
         return
     if kind == "file" and in_project:
-        sublime.status_message("%s is already in %s" % (name, os.path.dirname(file)))
+        sublime.status_message("%s is already in %s" %
+                               (name, os.path.dirname(file)))
         return
     root = check_recursive(base_folders, name)
     if root:
@@ -206,8 +230,10 @@ def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
         shutil.copyfile(file, copy)
     sublime.status_message("%s saved in %s" % (name, dst))
 
+
 def convert(file: str, name=None):
     """Convert the image to the format chosen from the quick panel."""
+
     window = sublime.active_window()
     basename, format = os.path.splitext(name or os.path.basename(file))
     all_formats = ALL_FORMATS.split('|')
@@ -223,6 +249,7 @@ def convert(file: str, name=None):
             sublime.status_message("%s saved in %s" % (to, folder))
     window.show_quick_panel(all_formats, on_done)
 
+
 class HoverPreview(sublime_plugin.EventListener):
 
     def __init__(self):
@@ -232,6 +259,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
     def handle_as_url(self, view: sublime.View, point: int, string: str, name: str) -> None:
         """Handle the given `string` as a url."""
+
         # Let's assume this url as input:
         # (https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg)
 
@@ -256,7 +284,8 @@ class HoverPreview(sublime_plugin.EventListener):
         basename, ext = os.path.splitext(name)  # => ("Example", ".svg")
         # create a temporary file
         tmp_file = os.path.join(tempfile.gettempdir(),
-                                "tmp_image" + (ext if need_conversion else ".png"))  # => "TEMPDIR/tmp_image.svg"
+                                "tmp_image" + (ext if need_conversion else ".png")
+                                )  # => "TEMPDIR/tmp_image.svg"
 
         # Save downloaded data in the temporary file
         content = f.read()
@@ -272,7 +301,8 @@ class HoverPreview(sublime_plugin.EventListener):
             conv_file = tmp_file  # => "TEMPDIR/tmp_image.svg"
             conv_name = name  # => "Example.svg"
 
-            png = os.path.splitext(tmp_file)[0] + ".png"  # => "TEMPDIR/tmp_image.png"
+            # => "TEMPDIR/tmp_image.png"
+            png = os.path.splitext(tmp_file)[0] + ".png"
 
             # use the magick command of Imagemagick to convert the image to png
             magick(tmp_file, png)
@@ -294,9 +324,10 @@ class HoverPreview(sublime_plugin.EventListener):
                 if self.url_popup_is_large:
                     self.url_popup_is_large = False
                     new_width, new_height = fix_oversize(width, height)
-                    view.update_popup(TEMPLATE % (new_width, new_height, encoded,
-                                                  real_width, real_height,
-                                                  size // 1024, save_as))
+                    view.update_popup(TEMPLATE % (new_width, new_height,
+                                                  encoded, real_width,
+                                                  real_height, size // 1024,
+                                                  save_as))
                 else:
                     self.url_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
@@ -329,13 +360,14 @@ class HoverPreview(sublime_plugin.EventListener):
         self.url_popup_is_large = True
 
     def handle_as_data_url(self, view: sublime.View, point: int, ext: str, encoded: str) -> None:
-        # Let's assume this data url as input:
-        # "data:image/gif;base64,R0lGODlhEAAOALMAAOazToeHh0tLS/7LZv/0jvb29t/f3//Ub//ge8WSLf/rhf/3kdbW1mxsbP//mf///yH5BAAAAAAALAAAAAAQAA4AAARe8L1Ekyky67QZ1hLnjM5UUde0ECwLJoExKcppV0aCcGCmTIHEIUEqjgaORCMxIC6e0CcguWw6aFjsVMkkIr7g77ZKPJjPZqIyd7sJAgVGoEGv2xsBxqNgYPj/gAwXEQA7"
+        """Handle the string as a data url."""
+
 
         # create a temporary file
-        tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)  # => "TEMPDIR/tmp_data_image.gif"
-        file_hash = int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8)  # => 8918007
-        name = str(file_hash) + "." + ext  # => "8918007.gif"
+        tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)
+        file_hash = int(hashlib.sha1(encoded.encode('utf-8')
+                                     ).hexdigest(), 16) % (10 ** 8)
+        name = str(file_hash) + "." + ext
 
         # Save downloaded data in the temporary file
         try:
@@ -355,14 +387,17 @@ class HoverPreview(sublime_plugin.EventListener):
                 if self.data_url_popup_is_large:
                     self.data_url_popup_is_large = False
                     new_width, new_height = fix_oversize(width, height)
-                    view.update_popup(DATA_URL_TEMPLATE % (new_width, new_height,
-                                                           ext, encoded, real_width,
-                                                           real_height, size // 1024))
+                    view.update_popup(DATA_URL_TEMPLATE % (new_width,
+                                                           new_height, ext,
+                                                           encoded, real_width,
+                                                           real_height,
+                                                           size // 1024))
                 else:
                     self.data_url_popup_is_large = True
                     view.update_popup(DATA_URL_TEMPLATE % (width, height, ext,
                                                            encoded, real_width,
-                                                           real_height, size // 1024))
+                                                           real_height,
+                                                           size // 1024))
             elif href == "save":
                 save(href, tmp_file, name, "data_url")
             elif href == "convert_to":
@@ -372,7 +407,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             DATA_URL_TEMPLATE % (width, height, ext, encoded, real_width,
-                        real_height, size // 1024),
+                                 real_height, size // 1024),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
