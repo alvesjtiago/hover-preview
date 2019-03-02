@@ -416,14 +416,9 @@ class HoverPreview(sublime_plugin.EventListener):
         # the data-url-based image's popup is too big
         self.data_url_popup_is_large = True
 
-    def handle_as_file(self, view: sublime.View, point: int, string: str) -> None:
+    def handle_as_file(self, view: sublime.View, point: int, string: str, name: str) -> None:
         """Handle the given `string` as a file."""
         # "hover_preview.png"
-
-        name = os.path.basename(string)
-
-        if not IMAGE_PATH_RE.match(name):
-            return
 
         file, in_project = get_file(view, string, name)
 
@@ -498,19 +493,19 @@ class HoverPreview(sublime_plugin.EventListener):
     def on_hover(self, view: sublime.View, point: int, hover_zone: int) -> None:
         if hover_zone != sublime.HOVER_TEXT:
             return
+
         string = get_string(view, point)
         if not string:
             return
 
-        image_data_url = IMAGE_DATA_URL_RE.match(string)
         # if it's a image data url handle as data url
+        image_data_url = IMAGE_DATA_URL_RE.match(string)
         if image_data_url:
             ext, encoded = image_data_url.groups()
-            # print(ext, encoded)
             return self.handle_as_data_url(view, point, ext, encoded)
 
-        image_url = IMAGE_URL_RE.match(string)
         # if it's an image url handle as url
+        image_url = IMAGE_URL_RE.match(string)
         if image_url:
             protocol, name = image_url.groups()
             # if the url doesn't start with http or https try adding it
@@ -520,6 +515,9 @@ class HoverPreview(sublime_plugin.EventListener):
             # don't block the app while handling the url
             sublime.set_timeout_async(lambda: self.handle_as_url(
                 view, point, string, name), 0)
+            return
+
         # if it's not an image url handle as file
-        else:
-            self.handle_as_file(view, point, string)
+        name = os.path.basename(string)
+        if IMAGE_PATH_RE.match(name):
+            return self.handle_as_file(view, point, string, name)
