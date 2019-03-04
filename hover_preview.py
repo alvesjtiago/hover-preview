@@ -177,7 +177,7 @@ def check_recursive(base_folders, name):
         for root, dirs, files in os.walk(base_folder):
             for f in files:
                 if f == name:
-                    return root
+                    return os.path.dirname(base_folder), root
 
 
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
@@ -188,71 +188,86 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
 
     # if it's an absolute path get it
     if os.path.isabs(string):
-        return (string, False)
+        return (string, None)
 
     # if search_mode: "project", search only in project
     elif SEARCH_MODE == "project":
-        # in_project = True
         # Get base project folders
         base_folders = sublime.active_window().folders()
         # if "recursive": true, recursively search for the name
         if RECURSIVE:
-            root = check_recursive(base_folders, name)
-            return (os.path.join(root, name) if root else "", True)
+            ch_rec = check_recursive(base_folders, name)
+            if ch_rec:
+                base_folder, root = ch_rec
+            return (os.path.join(root, name), base_folder)
         else:
             # search only in base folders for the relative path
             for base_folder in base_folders:
                 file_name = os.path.normpath(os.path.join(base_folder, string))
                 if os.path.exists(file_name):
-                    return (file_name, True)
+                    return (file_name, base_folder)
     # if search_mode: "file" join the relative path to the file path
     else:
         return (os.path.normpath(os.path.join(
-            os.path.dirname(view.file_name()), string)), False)
+            os.path.dirname(view.file_name()), string)), None)
 
 
-def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
-    """Save the image if it's not already in the project folder."""
+def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
+    """Save the image if it's not already in the project folders."""
 
+    # all folders in the project
     base_folders = sublime.active_window().folders()
-    dst = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
-    copy = os.path.join(dst, name)
+    # create the image folder in the first folder
+    image_folder = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
+    # exact or converted copy of the image
+    copy = os.path.join(image_folder, name)
+    # a relative version of the image_folder for display in the status message
+    image_folder_rel = os.path.relpath(
+        image_folder, os.path.dirname(base_folders[0]))
+
     if os.path.exists(copy):
-        sublime.status_message("%s is already in %s" % (name, dst))
-        return
-    if kind == "file" and in_project:
         sublime.status_message("%s is already in %s" %
-                               (name, os.path.dirname(file)))
+                               (name, image_folder_rel))
         return
-    root = check_recursive(base_folders, name)
-    if root:
-        sublime.status_message("%s is already in %s" % (name, root))
+
+    if kind == "file" and folder:
+        sublime.status_message("%s is already in %s" %
+                               (name, os.path.relpath(os.path.dirname(file), folder)))
         return
-    try:
+
+    ch_rec = check_recursive(base_folders, name)
+    if ch_rec:
+        folder, root = ch_rec
+        sublime.status_message("%s is already in %s" %
+                               (name, os.path.relpath(root, folder)))
+        return
+
+    if not os.path.exists(image_folder):
+        os.mkdir(image_folder)
+
+    if convert:
+        # create a converted copy
+        magick(file, copy)
+    else:
+        # create an exact copy
         shutil.copyfile(file, copy)
-    except:
-        os.mkdir(dst)
-        shutil.copyfile(file, copy)
-    sublime.status_message("%s saved in %s" % (name, dst))
+
+    sublime.status_message("%s saved in %s" % (name, image_folder_rel))
 
 
-def convert(file: str, name=None):
-    """Convert the image to the format chosen from the quick panel."""
+def convert(file: str, kind: str, name=None):
+    """Convert the image to the format chosen from the quick panel and save it."""
 
-    window = sublime.active_window()
-    basename, format = os.path.splitext(name or os.path.basename(file))
+    basename, ext = os.path.splitext(name or os.path.basename(file))
     all_formats = ALL_FORMATS.split('|')
-    all_formats.remove(format[1:])
-    folder = os.path.join(window.folders()[0], IMAGE_FOLDER_NAME)
+    # remove the extension of the file
+    all_formats.remove(ext[1:])
 
     def on_done(i):
         if i != -1:
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            to = basename + '.' + all_formats[i]
-            magick(file, os.path.join(folder, to))
-            sublime.status_message("%s saved in %s" % (to, folder))
-    window.show_quick_panel(all_formats, on_done)
+            save(file, basename + '.' + all_formats[i], kind, convert=True)
+
+    sublime.active_window().show_quick_panel(all_formats, on_done)
 
 
 class HoverPreview(sublime_plugin.EventListener):
@@ -289,7 +304,8 @@ class HoverPreview(sublime_plugin.EventListener):
         basename, ext = os.path.splitext(name)  # => ("Example", ".svg")
         # create a temporary file
         tmp_file = os.path.join(tempfile.gettempdir(),
-                                "tmp_image" + (ext if need_conversion else ".png")
+                                "tmp_image" +
+                                (ext if need_conversion else ".png")
                                 )  # => "TEMPDIR/tmp_image.svg"
 
         # Save downloaded data in the temporary file
@@ -340,16 +356,16 @@ class HoverPreview(sublime_plugin.EventListener):
                                                   size // 1024, save_as))
             elif href == "save":
                 if need_conversion:
-                    save(href, conv_file, conv_name, "url")
+                    save(conv_file, conv_name, "url")
                 else:
-                    save(href, tmp_file, name, "url")
+                    save(tmp_file, name, "url")
             elif href == "save as png":
-                save(href, tmp_file, name, "url")
+                save(tmp_file, name, "url")
             elif href == "convert_to":
                 if need_conversion:
-                    convert(conv_file, conv_name)
+                    convert(conv_file, "url", conv_name)
                 else:
-                    convert(tmp_file, name)
+                    convert(tmp_file, "url", name)
             else:
                 sublime.active_window().open_file(file)
 
@@ -366,7 +382,6 @@ class HoverPreview(sublime_plugin.EventListener):
 
     def handle_as_data_url(self, view: sublime.View, point: int, ext: str, encoded: str) -> None:
         """Handle the string as a data url."""
-
 
         # create a temporary file
         tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)
@@ -404,9 +419,9 @@ class HoverPreview(sublime_plugin.EventListener):
                                                            real_height,
                                                            size // 1024))
             elif href == "save":
-                save(href, tmp_file, name, "data_url")
+                save(tmp_file, name, "data_url")
             elif href == "convert_to":
-                convert(tmp_file, name)
+                convert(tmp_file, "data_url", name)
             else:
                 sublime.active_window().open_file(tmp_file)
 
@@ -430,7 +445,7 @@ class HoverPreview(sublime_plugin.EventListener):
         if not IMAGE_PATH_RE.match(name):
             return
 
-        file, in_project = get_file(view, string, name)
+        file, folder = get_file(view, string, name)
 
         # if file doesn't exist, return
         if not os.path.isfile(file):
@@ -480,13 +495,13 @@ class HoverPreview(sublime_plugin.EventListener):
                                                   size // 1024, save_as))
             elif href == "save":
                 if need_conversion:
-                    save(href, conv_file, conv_name, "file")
+                    save(conv_file, conv_name, "file")
                 else:
-                    save(href, file, name, "file", in_project)
+                    save(file, name, "file", folder)
             elif href == "save as png":
-                save(href, file, name, "file")
+                save(file, name, "file")
             elif href == "convert_to":
-                convert(conv_file if need_conversion else file)
+                convert(conv_file if need_conversion else file, "file")
             else:
                 sublime.active_window().open_file(file)
 
