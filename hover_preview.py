@@ -68,6 +68,8 @@ def plugin_loaded():
 
 
 def magick(inp, out):
+    """Convert the image from one format to another."""
+
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
@@ -166,7 +168,10 @@ def get_string(view: sublime.View, point: int) -> str:
 
 
 def check_recursive(base_folders, name):
-    """Return the path to the file if it is present in the project."""
+    """
+    Return the path to the base folder and the path to the file if it is
+    present in the project.
+    """
 
     for base_folder in base_folders:
         for root, dirs, files in os.walk(base_folder):
