@@ -344,13 +344,12 @@ class HoverPreview(sublime_plugin.EventListener):
                     new_width, new_height = fix_oversize(width, height)
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
-                                                  real_height, size // 1024,
-                                                  ))
+                                                  real_height, size // 1024))
                 else:
                     self.url_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024, ))
+                                                  size // 1024))
             elif href == "save":
                 if need_conversion:
                     save(conv_file, conv_name, "url")
@@ -366,7 +365,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024, ),
+                        real_height, size // 1024),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -490,7 +489,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024, ),
+                        real_height, size // 1024),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -522,12 +521,10 @@ class HoverPreview(sublime_plugin.EventListener):
             if not protocol:
                 string = "http://" + string.lstrip('/')
             # don't block the app while handling the url
-            sublime.set_timeout_async(lambda: self.handle_as_url(
+            return sublime.set_timeout_async(lambda: self.handle_as_url(
                 view, point, string, name), 0)
-            return
 
         # FILE
         name = os.path.basename(string)
         if IMAGE_PATH_RE.match(name):
-            self.handle_as_file(view, point, string, name)
-            return
+            return self.handle_as_file(view, point, string, name)
