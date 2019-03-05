@@ -436,14 +436,9 @@ class HoverPreview(sublime_plugin.EventListener):
         # the data-url-based image's popup is too big
         self.data_url_popup_is_large = True
 
-    def handle_as_file(self, view: sublime.View, point: int, string: str) -> None:
+    def handle_as_file(self, view: sublime.View, point: int, string: str, name: str) -> None:
         """Handle the given `string` as a file."""
         # "hover_preview.png"
-
-        name = os.path.basename(string)
-
-        if not IMAGE_PATH_RE.match(name):
-            return
 
         file, folder = get_file(view, string, name)
 
@@ -528,7 +523,6 @@ class HoverPreview(sublime_plugin.EventListener):
         image_data_url = IMAGE_DATA_URL_RE.match(string)
         if image_data_url:
             ext, encoded = image_data_url.groups()
-            # print(ext, encoded)
             return self.handle_as_data_url(view, point, ext, encoded)
 
         # URL
@@ -545,4 +539,7 @@ class HoverPreview(sublime_plugin.EventListener):
             return
 
         # FILE
-        self.handle_as_file(view, point, string)
+        name = os.path.basename(string)
+        if IMAGE_PATH_RE.match(name):
+            self.handle_as_file(view, point, string, name)
+            return
