@@ -20,7 +20,7 @@ TEMPLATE = """
     </a>
     <div>%dx%d %dKB</div>
     <div>
-        <a href="open">Open</a> | <a href="save">Save</a>%s | <a href="convert_to">Convert</a>
+        <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
     """
 
@@ -30,7 +30,7 @@ DATA_URL_TEMPLATE = """
     </a>
     <div>%dx%d %dKB</div>
     <div>
-        <a href="open">Open</a> | <a href="save">Save</a> | <a href="convert_to">Convert</a>
+        <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
     """
 
@@ -312,12 +312,9 @@ class HoverPreview(sublime_plugin.EventListener):
         content = f.read()
         with open(tmp_file, "wb") as dst:
             dst.write(content)
-        save_as = ""
+
         # if the file needs conversion, convert it then read data from the resulting png
         if need_conversion:
-            # add a `save_as` link
-            save_as = ' | <a href="save as png">Save as png</a>'
-
             # keep the image's temporary file and name for later use
             conv_file = tmp_file  # => "TEMPDIR/tmp_image.svg"
             conv_name = name  # => "Example.svg"
@@ -348,20 +345,18 @@ class HoverPreview(sublime_plugin.EventListener):
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
                                                   real_height, size // 1024,
-                                                  save_as))
+                                                  ))
                 else:
                     self.url_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024, save_as))
+                                                  size // 1024, ))
             elif href == "save":
                 if need_conversion:
                     save(conv_file, conv_name, "url")
                 else:
                     save(tmp_file, name, "url")
-            elif href == "save as png":
-                save(tmp_file, name, "url")
-            elif href == "convert_to":
+            elif href == "save_as":
                 if need_conversion:
                     convert(conv_file, "url", conv_name)
                 else:
@@ -371,7 +366,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024, save_as),
+                        real_height, size // 1024, ),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -420,7 +415,7 @@ class HoverPreview(sublime_plugin.EventListener):
                                                            size // 1024))
             elif href == "save":
                 save(tmp_file, name, "data_url")
-            elif href == "convert_to":
+            elif href == "save_as":
                 convert(tmp_file, "data_url", name)
             else:
                 sublime.active_window().open_file(tmp_file)
@@ -448,13 +443,9 @@ class HoverPreview(sublime_plugin.EventListener):
 
         # does the file need conversion ?
         need_conversion = file.endswith(FORMAT_TO_CONVERT)
-        save_as = ""
 
         # if the file needs conversion, convert it and read data from the resulting png
         if need_conversion:
-            # add `save as png` link
-            save_as = ' | <a href="save as png">Save as png</a>'
-
             # keep the image's file and name for later use
             conv_file = file
             conv_name = name
@@ -481,28 +472,25 @@ class HoverPreview(sublime_plugin.EventListener):
                     new_width, new_height = fix_oversize(width, height)
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
-                                                  real_height, size // 1024,
-                                                  save_as))
+                                                  real_height, size // 1024))
                 else:
                     self.file_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024, save_as))
+                                                  size // 1024))
             elif href == "save":
                 if need_conversion:
                     save(conv_file, conv_name, "file")
                 else:
                     save(file, name, "file", folder)
-            elif href == "save as png":
-                save(file, name, "file")
-            elif href == "convert_to":
+            elif href == "save_as":
                 convert(conv_file if need_conversion else file, "file")
             else:
                 sublime.active_window().open_file(file)
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024, save_as),
+                        real_height, size // 1024, ),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
