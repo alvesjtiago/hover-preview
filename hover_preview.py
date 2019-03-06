@@ -199,7 +199,8 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
             ch_rec = check_recursive(base_folders, name)
             if ch_rec:
                 base_folder, root = ch_rec
-            return (os.path.join(root, name), base_folder)
+                return (os.path.join(root, name), base_folder)
+            return ("", None)
         else:
             # search only in base folders for the relative path
             for base_folder in base_folders:
@@ -506,13 +507,13 @@ class HoverPreview(sublime_plugin.EventListener):
         if not string:
             return
 
-        # DATA URL
+        # =================DATA URL=================
         image_data_url = IMAGE_DATA_URL_RE.match(string)
         if image_data_url:
             ext, encoded = image_data_url.groups()
             return self.handle_as_data_url(view, point, ext, encoded)
 
-        # URL
+        # ==================URL=====================
         image_url = IMAGE_URL_RE.match(string)
         if image_url:
             protocol, name = image_url.groups()
@@ -524,7 +525,7 @@ class HoverPreview(sublime_plugin.EventListener):
             return sublime.set_timeout_async(lambda: self.handle_as_url(
                 view, point, string, name), 0)
 
-        # FILE
+        # =================FILE=====================
         name = os.path.basename(string)
         if IMAGE_PATH_RE.match(name):
             return self.handle_as_file(view, point, string, name)
