@@ -1,0 +1,6 @@
+
+Hover Image Preview v0.0.24
+===========================
+
+## Fixes
+    - converted images may be duplicated

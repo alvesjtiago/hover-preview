@@ -1,5 +1,9 @@
 {
     "install": "messages/install.txt",
     "0.0.19": "messages/0.0.19.txt",
-    "0.0.20": "messages/0.0.20.txt"
+    "0.0.20": "messages/0.0.20.txt",
+    "0.0.21": "messages/0.0.21.txt",
+    "0.0.22": "messages/0.0.22.txt",
+    "0.0.23": "messages/0.0.23.txt",
+    "0.0.24": "messages/0.0.24.txt"
 }
