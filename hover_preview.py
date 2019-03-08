@@ -160,11 +160,34 @@ def get_string(view: sublime.View, point: int) -> str:
     # Get the initial region of quoted string
     initial_region = all_quotes[all_quotes.index(final_region) - 1]
 
-    if point < initial_region.b or point > final_region.a:
+    start = initial_region.b
+    end = final_region.a
+    if point < start or point > end:
         return
 
+    string = view.substr(sublime.Region(start, end))
+    # we split the string on any number of space characters followed by 1 to 4
+    # digits, w or x, a comma then any number of space characters
+    # eg: " 2000w, "
+    # get the spans of the separators so we can deduce the spans of the strings
+    ls = [m.span() for m in re.finditer(r'\s+?\d{1,4}[wx],\s*', string)]
+    if ls:
+        # we remove the offset (start) from point because the spans start from 0
+        point -= start
+        # from the start to the start of the first separator
+        if 0 <= point <= ls[0][0]:
+            return view.substr(sublime.Region(start, ls[0][0] + start))
+
+        for i in range(len(ls)-1):
+            if ls[i][1] <= point <= ls[i+1][0]:
+                return view.substr(sublime.Region(ls[i][1] + start, ls[i+1][0] + start))
+
+        if ls[-1][1] <= point <= end:
+            # there may be some 'left-overs' at the end
+            return view.substr(sublime.Region(ls[-1][1] + start, end + start)).split()[0]
+
     # String path for file
-    return view.substr(sublime.Region(initial_region.b, final_region.a))
+    return string
 
 
 def check_recursive(base_folders, name):

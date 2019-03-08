@@ -2,5 +2,8 @@
 Hover Image Preview v0.0.24
 ===========================
 
+## New Features
+    - support for srcset and data-srcset (#23)
+
 ## Fixes
     - converted images may be duplicated
