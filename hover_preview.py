@@ -20,7 +20,7 @@ TEMPLATE = """
     </a>
     <div>%dx%d %dKB</div>
     <div>
-        <a href="open">Open</a> | <a href="save">Save</a>%s | <a href="convert_to">Convert</a>
+        <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
     """
 
@@ -30,7 +30,7 @@ DATA_URL_TEMPLATE = """
     </a>
     <div>%dx%d %dKB</div>
     <div>
-        <a href="open">Open</a> | <a href="save">Save</a> | <a href="convert_to">Convert</a>
+        <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
     """
 
@@ -68,6 +68,8 @@ def plugin_loaded():
 
 
 def magick(inp, out):
+    """Convert the image from one format to another."""
+
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
@@ -158,21 +160,47 @@ def get_string(view: sublime.View, point: int) -> str:
     # Get the initial region of quoted string
     initial_region = all_quotes[all_quotes.index(final_region) - 1]
 
-    if point < initial_region.b or point > final_region.a:
+    start = initial_region.b
+    end = final_region.a
+    if point < start or point > end:
         return
 
+    string = view.substr(sublime.Region(start, end))
+    # we split the string on any number of space characters followed by 1 to 4
+    # digits, w or x, a comma then any number of space characters
+    # eg: " 2000w, "
+    # get the spans of the separators so we can deduce the spans of the strings
+    ls = [m.span() for m in re.finditer(r'\s+?\d{1,4}[wx],\s*', string)]
+    if ls:
+        # we remove the offset (start) from point because the spans start from 0
+        point -= start
+        # from the start to the start of the first separator
+        if 0 <= point <= ls[0][0]:
+            return view.substr(sublime.Region(start, ls[0][0] + start))
+
+        for i in range(len(ls)-1):
+            if ls[i][1] <= point <= ls[i+1][0]:
+                return view.substr(sublime.Region(ls[i][1] + start, ls[i+1][0] + start))
+
+        if ls[-1][1] <= point <= end:
+            # there may be some 'left-overs' at the end
+            return view.substr(sublime.Region(ls[-1][1] + start, end + start)).split()[0]
+
     # String path for file
-    return view.substr(sublime.Region(initial_region.b, final_region.a))
+    return string
 
 
 def check_recursive(base_folders, name):
-    """Return the path to the file if it is present in the project."""
+    """
+    Return the path to the base folder and the path to the file if it is
+    present in the project.
+    """
 
     for base_folder in base_folders:
         for root, dirs, files in os.walk(base_folder):
             for f in files:
                 if f == name:
-                    return root
+                    return os.path.dirname(base_folder), root
 
 
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
@@ -183,71 +211,87 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
 
     # if it's an absolute path get it
     if os.path.isabs(string):
-        return (string, False)
+        return (string, None)
 
     # if search_mode: "project", search only in project
     elif SEARCH_MODE == "project":
-        # in_project = True
         # Get base project folders
         base_folders = sublime.active_window().folders()
         # if "recursive": true, recursively search for the name
         if RECURSIVE:
-            root = check_recursive(base_folders, name)
-            return (os.path.join(root, name) if root else "", True)
+            ch_rec = check_recursive(base_folders, name)
+            if ch_rec:
+                base_folder, root = ch_rec
+                return (os.path.join(root, name), base_folder)
+            return ("", None)
         else:
             # search only in base folders for the relative path
             for base_folder in base_folders:
                 file_name = os.path.normpath(os.path.join(base_folder, string))
                 if os.path.exists(file_name):
-                    return (file_name, True)
+                    return (file_name, base_folder)
     # if search_mode: "file" join the relative path to the file path
     else:
         return (os.path.normpath(os.path.join(
-            os.path.dirname(view.file_name()), string)), False)
+            os.path.dirname(view.file_name()), string)), None)
 
 
-def save(href: str, file: str, name: str, kind: str, in_project=False) -> None:
-    """Save the image if it's not already in the project folder."""
+def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
+    """Save the image if it's not already in the project folders."""
 
+    # all folders in the project
     base_folders = sublime.active_window().folders()
-    dst = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
-    copy = os.path.join(dst, name)
+    # create the image folder in the first folder
+    image_folder = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
+    # exact or converted copy of the image
+    copy = os.path.join(image_folder, name)
+    # a relative version of the image_folder for display in the status message
+    image_folder_rel = os.path.relpath(
+        image_folder, os.path.dirname(base_folders[0]))
+
     if os.path.exists(copy):
-        sublime.status_message("%s is already in %s" % (name, dst))
-        return
-    if kind == "file" and in_project:
         sublime.status_message("%s is already in %s" %
-                               (name, os.path.dirname(file)))
+                               (name, image_folder_rel))
         return
-    root = check_recursive(base_folders, name)
-    if root:
-        sublime.status_message("%s is already in %s" % (name, root))
+
+    if kind == "file" and folder:
+        sublime.status_message("%s is already in %s" %
+                               (name, os.path.relpath(os.path.dirname(file), folder)))
         return
-    try:
+
+    ch_rec = check_recursive(base_folders, name)
+    if ch_rec:
+        folder, root = ch_rec
+        sublime.status_message("%s is already in %s" %
+                               (name, os.path.relpath(root, folder)))
+        return
+
+    if not os.path.exists(image_folder):
+        os.mkdir(image_folder)
+
+    if convert:
+        # create a converted copy
+        magick(file, copy)
+    else:
+        # create an exact copy
         shutil.copyfile(file, copy)
-    except:
-        os.mkdir(dst)
-        shutil.copyfile(file, copy)
-    sublime.status_message("%s saved in %s" % (name, dst))
+
+    sublime.status_message("%s saved in %s" % (name, image_folder_rel))
 
 
-def convert(file: str, name=None):
-    """Convert the image to the format chosen from the quick panel."""
+def convert(file: str, kind: str, name=None):
+    """Convert the image to the format chosen from the quick panel and save it."""
 
-    window = sublime.active_window()
-    basename, format = os.path.splitext(name or os.path.basename(file))
+    basename, ext = os.path.splitext(name or os.path.basename(file))
     all_formats = ALL_FORMATS.split('|')
-    all_formats.remove(format[1:])
-    folder = os.path.join(window.folders()[0], IMAGE_FOLDER_NAME)
+    # remove the extension of the file
+    all_formats.remove(ext[1:])
 
     def on_done(i):
         if i != -1:
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            to = basename + '.' + all_formats[i]
-            magick(file, os.path.join(folder, to))
-            sublime.status_message("%s saved in %s" % (to, folder))
-    window.show_quick_panel(all_formats, on_done)
+            save(file, basename + '.' + all_formats[i], kind, convert=True)
+
+    sublime.active_window().show_quick_panel(all_formats, on_done)
 
 
 class HoverPreview(sublime_plugin.EventListener):
@@ -284,19 +328,17 @@ class HoverPreview(sublime_plugin.EventListener):
         basename, ext = os.path.splitext(name)  # => ("Example", ".svg")
         # create a temporary file
         tmp_file = os.path.join(tempfile.gettempdir(),
-                                "tmp_image" + (ext if need_conversion else ".png")
+                                "tmp_image" +
+                                (ext if need_conversion else ".png")
                                 )  # => "TEMPDIR/tmp_image.svg"
 
         # Save downloaded data in the temporary file
         content = f.read()
         with open(tmp_file, "wb") as dst:
             dst.write(content)
-        save_as = ""
+
         # if the file needs conversion, convert it then read data from the resulting png
         if need_conversion:
-            # add a `save_as` link
-            save_as = ' | <a href="save as png">Save as png</a>'
-
             # keep the image's temporary file and name for later use
             conv_file = tmp_file  # => "TEMPDIR/tmp_image.svg"
             conv_name = name  # => "Example.svg"
@@ -326,31 +368,28 @@ class HoverPreview(sublime_plugin.EventListener):
                     new_width, new_height = fix_oversize(width, height)
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
-                                                  real_height, size // 1024,
-                                                  save_as))
+                                                  real_height, size // 1024))
                 else:
                     self.url_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024, save_as))
+                                                  size // 1024))
             elif href == "save":
                 if need_conversion:
-                    save(href, conv_file, conv_name, "url")
+                    save(conv_file, conv_name, "url")
                 else:
-                    save(href, tmp_file, name, "url")
-            elif href == "save as png":
-                save(href, tmp_file, name, "url")
-            elif href == "convert_to":
+                    save(tmp_file, name, "url")
+            elif href == "save_as":
                 if need_conversion:
-                    convert(conv_file, conv_name)
+                    convert(conv_file, "url", conv_name)
                 else:
-                    convert(tmp_file, name)
+                    convert(tmp_file, "url", name)
             else:
                 sublime.active_window().open_file(file)
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024, save_as),
+                        real_height, size // 1024),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -361,7 +400,6 @@ class HoverPreview(sublime_plugin.EventListener):
 
     def handle_as_data_url(self, view: sublime.View, point: int, ext: str, encoded: str) -> None:
         """Handle the string as a data url."""
-
 
         # create a temporary file
         tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)
@@ -399,9 +437,9 @@ class HoverPreview(sublime_plugin.EventListener):
                                                            real_height,
                                                            size // 1024))
             elif href == "save":
-                save(href, tmp_file, name, "data_url")
-            elif href == "convert_to":
-                convert(tmp_file, name)
+                save(tmp_file, name, "data_url")
+            elif href == "save_as":
+                convert(tmp_file, "data_url", name)
             else:
                 sublime.active_window().open_file(tmp_file)
 
@@ -420,7 +458,7 @@ class HoverPreview(sublime_plugin.EventListener):
         """Handle the given `string` as a file."""
         # "hover_preview.png"
 
-        file, in_project = get_file(view, string, name)
+        file, folder = get_file(view, string, name)
 
         # if file doesn't exist, return
         if not os.path.isfile(file):
@@ -428,13 +466,9 @@ class HoverPreview(sublime_plugin.EventListener):
 
         # does the file need conversion ?
         need_conversion = file.endswith(FORMAT_TO_CONVERT)
-        save_as = ""
 
         # if the file needs conversion, convert it and read data from the resulting png
         if need_conversion:
-            # add `save as png` link
-            save_as = ' | <a href="save as png">Save as png</a>'
-
             # keep the image's file and name for later use
             conv_file = file
             conv_name = name
@@ -461,28 +495,25 @@ class HoverPreview(sublime_plugin.EventListener):
                     new_width, new_height = fix_oversize(width, height)
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
-                                                  real_height, size // 1024,
-                                                  save_as))
+                                                  real_height, size // 1024))
                 else:
                     self.file_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024, save_as))
+                                                  size // 1024))
             elif href == "save":
                 if need_conversion:
-                    save(href, conv_file, conv_name, "file")
+                    save(conv_file, conv_name, "file")
                 else:
-                    save(href, file, name, "file", in_project)
-            elif href == "save as png":
-                save(href, file, name, "file")
-            elif href == "convert_to":
-                convert(conv_file if need_conversion else file)
+                    save(file, name, "file", folder)
+            elif href == "save_as":
+                convert(conv_file if need_conversion else file, "file")
             else:
                 sublime.active_window().open_file(file)
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024, save_as),
+                        real_height, size // 1024),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -491,6 +522,7 @@ class HoverPreview(sublime_plugin.EventListener):
         self.file_popup_is_large = True
 
     def on_hover(self, view: sublime.View, point: int, hover_zone: int) -> None:
+
         if hover_zone != sublime.HOVER_TEXT:
             return
 
@@ -498,13 +530,13 @@ class HoverPreview(sublime_plugin.EventListener):
         if not string:
             return
 
-        # if it's a image data url handle as data url
+        # =================DATA URL=================
         image_data_url = IMAGE_DATA_URL_RE.match(string)
         if image_data_url:
             ext, encoded = image_data_url.groups()
             return self.handle_as_data_url(view, point, ext, encoded)
 
-        # if it's an image url handle as url
+        # ==================URL=====================
         image_url = IMAGE_URL_RE.match(string)
         if image_url:
             protocol, name = image_url.groups()
@@ -513,11 +545,10 @@ class HoverPreview(sublime_plugin.EventListener):
             if not protocol:
                 string = "http://" + string.lstrip('/')
             # don't block the app while handling the url
-            sublime.set_timeout_async(lambda: self.handle_as_url(
+            return sublime.set_timeout_async(lambda: self.handle_as_url(
                 view, point, string, name), 0)
-            return
 
-        # if it's not an image url handle as file
+        # =================FILE=====================
         name = os.path.basename(string)
         if IMAGE_PATH_RE.match(name):
             return self.handle_as_file(view, point, string, name)
