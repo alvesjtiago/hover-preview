@@ -230,6 +230,7 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
                 file_name = os.path.normpath(os.path.join(base_folder, string))
                 if os.path.exists(file_name):
                     return (file_name, base_folder)
+            return ("", None)
     # if search_mode: "file" join the relative path to the file path
     else:
         return (os.path.normpath(os.path.join(
