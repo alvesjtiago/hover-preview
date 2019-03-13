@@ -39,7 +39,7 @@ DATA_URL_TEMPLATE = """
 IMAGE_DATA_URL_RE = re.compile(
     r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/]+={0,2})")
 
-TEMP_DIR = tempfile.gettemp_dir()
+TEMP_DIR = tempfile.gettempdir()
 
 
 def hover_preview_callback():
