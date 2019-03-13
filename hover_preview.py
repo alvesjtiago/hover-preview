@@ -1,7 +1,7 @@
 import base64
 import hashlib
 import os
-import tempfile
+import os.path as osp
 import re
 import shutil
 import subprocess
@@ -202,7 +202,7 @@ def check_recursive(base_folders, name):
         for root, dirs, files in os.walk(base_folder):
             for f in files:
                 if f == name:
-                    return os.path.dirname(base_folder), root
+                    return osp.dirname(base_folder), root
 
 
 def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
@@ -212,7 +212,7 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
     """
 
     # if it's an absolute path get it
-    if os.path.isabs(string):
+    if osp.isabs(string):
         return (string, None)
 
     # if search_mode: "project", search only in project
@@ -224,19 +224,18 @@ def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
             ch_rec = check_recursive(base_folders, name)
             if ch_rec:
                 base_folder, root = ch_rec
-                return (os.path.join(root, name), base_folder)
+                return (osp.join(root, name), base_folder)
             return ("", None)
         else:
             # search only in base folders for the relative path
             for base_folder in base_folders:
-                file_name = os.path.normpath(os.path.join(base_folder, string))
-                if os.path.exists(file_name):
+                file_name = osp.normpath(osp.join(base_folder, string))
+                if osp.exists(file_name):
                     return (file_name, base_folder)
             return ("", None)
     # if search_mode: "file" join the relative path to the file path
     else:
-        return (os.path.normpath(os.path.join(
-            os.path.dirname(view.file_name()), string)), None)
+        return (osp.normpath(osp.join(osp.dirname(view.file_name()), string)), None)
 
 
 def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
@@ -245,31 +244,30 @@ def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
     # all folders in the project
     base_folders = sublime.active_window().folders()
     # create the image folder in the first folder
-    image_folder = os.path.join(base_folders[0], IMAGE_FOLDER_NAME)
+    image_folder = osp.join(base_folders[0], IMAGE_FOLDER_NAME)
     # exact or converted copy of the image
-    copy = os.path.join(image_folder, name)
+    copy = osp.join(image_folder, name)
     # a relative version of the image_folder for display in the status message
-    image_folder_rel = os.path.relpath(
-        image_folder, os.path.dirname(base_folders[0]))
+    image_folder_rel = osp.relpath(
+        image_folder, osp.dirname(base_folders[0]))
 
-    if os.path.exists(copy):
-        sublime.status_message("%s is already in %s" %
-                               (name, image_folder_rel))
+    if osp.exists(copy):
+        sublime.status_message("%s is already in %s" % (name, image_folder_rel))
         return
 
     if kind == "file" and folder:
         sublime.status_message("%s is already in %s" %
-                               (name, os.path.relpath(os.path.dirname(file), folder)))
+                               (name, osp.relpath(osp.dirname(file), folder)))
         return
 
     ch_rec = check_recursive(base_folders, name)
     if ch_rec:
         folder, root = ch_rec
         sublime.status_message("%s is already in %s" %
-                               (name, os.path.relpath(root, folder)))
+                               (name, osp.relpath(root, folder)))
         return
 
-    if not os.path.exists(image_folder):
+    if not osp.exists(image_folder):
         os.mkdir(image_folder)
 
     if convert:
@@ -285,7 +283,7 @@ def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
 def convert(file: str, kind: str, name=None):
     """Convert the image to the format chosen from the quick panel and save it."""
 
-    basename, ext = os.path.splitext(name or os.path.basename(file))
+    basename, ext = osp.splitext(name or osp.basename(file))
     all_formats = ALL_FORMATS.split('|')
     # remove the extension of the file
     all_formats.remove(ext[1:])
@@ -328,12 +326,11 @@ class HoverPreview(sublime_plugin.EventListener):
 
         # file needs conversion ?
         need_conversion = name.endswith(FORMAT_TO_CONVERT)  # => True
-        basename, ext = os.path.splitext(name)  # => ("Example", ".svg")
+        basename, ext = osp.splitext(name)  # => ("Example", ".svg")
         # create a temporary file
-        tmp_file = os.path.join(tempfile.gettempdir(),
-                                "tmp_image" +
-                                (ext if need_conversion else ".png")
-                                )  # => "TEMPDIR/tmp_image.svg"
+        tmp_file = osp.join(tempfile.gettempdir(),
+                            "tmp_image" + (ext if need_conversion else ".png")
+                            )  # => "TEMPDIR/tmp_image.svg"
 
         # Save downloaded data in the temporary file
         content = f.read()
@@ -347,7 +344,7 @@ class HoverPreview(sublime_plugin.EventListener):
             conv_name = name  # => "Example.svg"
 
             # => "TEMPDIR/tmp_image.png"
-            png = os.path.splitext(tmp_file)[0] + ".png"
+            png = osp.splitext(tmp_file)[0] + ".png"
 
             # use the magick command of Imagemagick to convert the image to png
             magick(tmp_file, png)
@@ -405,7 +402,7 @@ class HoverPreview(sublime_plugin.EventListener):
         """Handle the string as a data url."""
 
         # create a temporary file
-        tmp_file = os.path.join(tempfile.gettempdir(), "tmp_data_image." + ext)
+        tmp_file = osp.join(tempfile.gettempdir(), "tmp_data_image." + ext)
         file_hash = int(hashlib.sha1(encoded.encode('utf-8')
                                      ).hexdigest(), 16) % (10 ** 8)
         name = str(file_hash) + "." + ext
@@ -464,7 +461,7 @@ class HoverPreview(sublime_plugin.EventListener):
         file, folder = get_file(view, string, name)
 
         # if file doesn't exist, return
-        if not os.path.isfile(file):
+        if not osp.isfile(file):
             return
 
         # does the file need conversion ?
@@ -477,8 +474,8 @@ class HoverPreview(sublime_plugin.EventListener):
             conv_name = name
 
             # create a temporary file
-            tmp_file = os.path.join(tempfile.gettempdir(), "tmp_png.png")
-            name = os.path.splitext(name)[0] + ".png"
+            tmp_file = osp.join(tempfile.gettempdir(), "tmp_png.png")
+            name = osp.splitext(name)[0] + ".png"
 
             # use the magick command of Imagemagick to convert the image to png
             magick(file, tmp_file)
@@ -552,6 +549,6 @@ class HoverPreview(sublime_plugin.EventListener):
                 view, point, string, name), 0)
 
         # =================FILE=====================
-        name = os.path.basename(string)
+        name = osp.basename(string)
         if IMAGE_PATH_RE.match(name):
             return self.handle_as_file(view, point, string, name)
