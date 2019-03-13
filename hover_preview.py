@@ -186,11 +186,11 @@ def get_string(view: sublime.View, point: int) -> str:
             if ls[i][1] <= point <= ls[i+1][0]:
                 return view.substr(sublime.Region(ls[i][1] + start, ls[i+1][0] + start))
 
+        # from the end of the last separator to the end
         if ls[-1][1] <= point <= end:
             # there may be some 'left-overs' at the end
             return view.substr(sublime.Region(ls[-1][1] + start, end + start)).split()[0]
 
-    # String path for file
     return string
 
 
