@@ -39,6 +39,8 @@ DATA_URL_TEMPLATE = """
 IMAGE_DATA_URL_RE = re.compile(
     r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/]+={0,2})")
 
+TEMP_DIR = tempfile.gettemp_dir()
+
 
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
@@ -328,9 +330,9 @@ class HoverPreview(sublime_plugin.EventListener):
         need_conversion = name.endswith(FORMAT_TO_CONVERT)  # => True
         basename, ext = osp.splitext(name)  # => ("Example", ".svg")
         # create a temporary file
-        tmp_file = osp.join(tempfile.gettempdir(),
+        tmp_file = osp.join(TEMP_DIR,
                             "tmp_image" + (ext if need_conversion else ".png")
-                            )  # => "TEMPDIR/tmp_image.svg"
+                            )  # => "TEMP_DIR/tmp_image.svg"
 
         # Save downloaded data in the temporary file
         content = f.read()
@@ -340,17 +342,17 @@ class HoverPreview(sublime_plugin.EventListener):
         # if the file needs conversion, convert it then read data from the resulting png
         if need_conversion:
             # keep the image's temporary file and name for later use
-            conv_file = tmp_file  # => "TEMPDIR/tmp_image.svg"
+            conv_file = tmp_file  # => "TEMP_DIR/tmp_image.svg"
             conv_name = name  # => "Example.svg"
 
-            # => "TEMPDIR/tmp_image.png"
+            # => "TEMP_DIR/tmp_image.png"
             png = osp.splitext(tmp_file)[0] + ".png"
 
             # use the magick command of Imagemagick to convert the image to png
             magick(tmp_file, png)
 
             # set temp_file and name to the png file
-            tmp_file = png  # => "TEMPDIR/tmp_image.png"
+            tmp_file = png  # => "TEMP_DIR/tmp_image.png"
             name = basename + ".png"  # => "Example.png"
 
             # read data from the resulting png
@@ -402,7 +404,7 @@ class HoverPreview(sublime_plugin.EventListener):
         """Handle the string as a data url."""
 
         # create a temporary file
-        tmp_file = osp.join(tempfile.gettempdir(), "tmp_data_image." + ext)
+        tmp_file = osp.join(TEMP_DIR, "tmp_data_image." + ext)
         file_hash = int(hashlib.sha1(encoded.encode('utf-8')
                                      ).hexdigest(), 16) % (10 ** 8)
         name = str(file_hash) + "." + ext
@@ -474,7 +476,7 @@ class HoverPreview(sublime_plugin.EventListener):
             conv_name = name
 
             # create a temporary file
-            tmp_file = osp.join(tempfile.gettempdir(), "tmp_png.png")
+            tmp_file = osp.join(TEMP_DIR, "tmp_png.png")
             name = osp.splitext(name)[0] + ".png"
 
             # use the magick command of Imagemagick to convert the image to png
