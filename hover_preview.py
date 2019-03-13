@@ -1,10 +1,12 @@
 import base64
-import re
+import hashlib
 import os
 import tempfile
-import subprocess
+import re
 import shutil
-import hashlib
+import subprocess
+import tempfile
+
 from urllib.parse import quote, unquote
 from urllib.request import urlopen
 
