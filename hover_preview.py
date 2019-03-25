@@ -124,48 +124,31 @@ def fix_oversize(width: int, height: int) -> (int, int):
 def get_string(view: sublime.View, point: int) -> str:
     """Return the string of the region containing `point` and delimeted by "", '' or ()."""
 
-    next_double_quote = view.find('"', point).a
-    next_single_quote = view.find("'", point).a
-    next_parentheses = view.find(r"\)", point).a
+    # all delimeters from the mouse pointer forward
+    symbols_dict = {view.find(symbol, point).a: symbol for symbol in ('"', "'", r"\)")}
 
-    symbols_dict = {
-        next_double_quote: '"',
-        next_single_quote: "'",
-        next_parentheses: ')'
-    }
-
-    symbols = []
-    if next_double_quote != -1:
-        symbols.append(next_double_quote)
-    if next_single_quote != -1:
-        symbols.append(next_single_quote)
-    if next_parentheses != -1:
-        symbols.append(next_parentheses)
-
-    # Check if symbols exist from the mouse pointer forward
-    if not symbols:
+    # get the end of the delimeted string
+    try:
+        end = min(pos for pos in symbols_dict if pos != -1)
+    except ValueError:
         return
 
-    closest_symbol = min(symbols)
-    symbol = symbols_dict[closest_symbol]
+    symbol = symbols_dict[end]
 
-    # All quotes in view
-    all_quotes = view.find_all(r"\(|\)" if symbol == ')' else symbol)
+    # all delimeters regions in view
+    all_regions = view.find_all(r"\(|\)" if symbol == r"\)" else symbol)
 
-    # Get the final region of quoted string
-    for item in all_quotes:
-        if item.a == closest_symbol:
-            final_region = item
+    # get the start of the delimeted string
+    i = -1
+    for region in all_regions:
+        if region.a == end:
+            start = all_regions[i].b
             break
+        i += 1
     # If there are no matches return
     else:
         return
 
-    # Get the initial region of quoted string
-    initial_region = all_quotes[all_quotes.index(final_region) - 1]
-
-    start = initial_region.b
-    end = final_region.a
     if point < start or point > end:
         return
 
@@ -174,22 +157,22 @@ def get_string(view: sublime.View, point: int) -> str:
     # digits, w or x, a comma then any number of space characters
     # eg: " 2000w, "
     # get the spans of the separators so we can deduce the spans of the strings
-    ls = [m.span() for m in re.finditer(r'\s+?\d{1,4}[wx],\s*', string)]
-    if ls:
+    sep_spans = [m.span() for m in re.finditer(r'\s+?\d{1,4}[wx],\s*', string)]
+    if sep_spans:
         # we remove the offset (start) from point because the spans start from 0
         point -= start
         # from the start to the start of the first separator
-        if 0 <= point <= ls[0][0]:
-            return view.substr(sublime.Region(start, ls[0][0] + start))
+        if point <= sep_spans[0][0]:
+            return view.substr(sublime.Region(start, sep_spans[0][0] + start))
 
-        for i in range(len(ls)-1):
-            if ls[i][1] <= point <= ls[i+1][0]:
-                return view.substr(sublime.Region(ls[i][1] + start, ls[i+1][0] + start))
+        for i in range(len(sep_spans) - 1):
+            if sep_spans[i][1] <= point <= sep_spans[i + 1][0]:
+                return view.substr(sublime.Region(sep_spans[i][1] + start, sep_spans[i + 1][0] + start))
 
         # from the end of the last separator to the end
-        if ls[-1][1] <= point <= end:
+        if sep_spans[-1][1] <= point:
             # there may be some 'left-overs' at the end
-            return view.substr(sublime.Region(ls[-1][1] + start, end + start)).split()[0]
+            return view.substr(sublime.Region(sep_spans[-1][1] + start, end + start)).split()[0]
 
     return string
 
