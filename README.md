@@ -14,19 +14,19 @@ Search for "Hover Image Preview" and install.
 ### Manual
 
 _macOS_
-```
+```sh
 cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages
 git clone --depth=1 https://github.com/alvesjtiago/hover-preview.git
 ```
 
 _Ubuntu_
-```
+```sh
 cd ~/.config/sublime-text-3/Packages
 git clone --depth=1 https://github.com/alvesjtiago/hover-preview.git
 ```
 
 _Windows_
-```
+```sh
 cd "%APPDATA%\Sublime Text 3\Packages"
 git clone --depth=1 https://github.com/alvesjtiago/hover-preview.git
 ```
