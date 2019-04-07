@@ -20,7 +20,7 @@ TEMPLATE = """
     <a href="resize">
         <img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s">
     </a>
-    <div>%dx%d %dKB</div>
+    <div>%dx%d %s</div>
     <div>
         <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
@@ -30,7 +30,7 @@ DATA_URL_TEMPLATE = """
     <a href="resize">
         <img style="width: %dpx;height: %dpx;" src="data:image/%s;base64,%s">
     </a>
-    <div>%dx%d %dKB</div>
+    <div>%dx%d %s</div>
     <div>
         <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
@@ -362,6 +362,7 @@ class HoverPreview(sublime_plugin.EventListener):
         real_width, real_height, size = get_image_size(tmp_file)
         width, height = get_dimensions(view, tmp_file)
         encoded = str(base64.b64encode(content), "utf-8")
+        size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
         def on_navigate(href):
             if href == "resize":
@@ -370,12 +371,12 @@ class HoverPreview(sublime_plugin.EventListener):
                     new_width, new_height = fix_oversize(width, height)
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
-                                                  real_height, size // 1024))
+                                                  real_height, size))
                 else:
                     self.url_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024))
+                                                  size))
             elif href == "save":
                 if need_conversion:
                     save(conv_file, conv_name, "url")
@@ -391,7 +392,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024),
+                        real_height, size),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -421,6 +422,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         real_width, real_height, size = get_image_size(tmp_file)
         width, height = get_dimensions(view, tmp_file)
+        size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
         def on_navigate(href):
             if href == "resize":
@@ -431,13 +433,13 @@ class HoverPreview(sublime_plugin.EventListener):
                                                            new_height, ext,
                                                            encoded, real_width,
                                                            real_height,
-                                                           size // 1024))
+                                                           size))
                 else:
                     self.data_url_popup_is_large = True
                     view.update_popup(DATA_URL_TEMPLATE % (width, height, ext,
                                                            encoded, real_width,
                                                            real_height,
-                                                           size // 1024))
+                                                           size))
             elif href == "save":
                 save(tmp_file, name, "data_url")
             elif href == "save_as":
@@ -447,7 +449,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             DATA_URL_TEMPLATE % (width, height, ext, encoded, real_width,
-                                 real_height, size // 1024),
+                                 real_height, size),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
@@ -489,6 +491,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         real_width, real_height, size = get_image_size(file)
         width, height = get_dimensions(view, file)
+        size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
         def on_navigate(href):
             if href == "resize":
@@ -497,12 +500,12 @@ class HoverPreview(sublime_plugin.EventListener):
                     new_width, new_height = fix_oversize(width, height)
                     view.update_popup(TEMPLATE % (new_width, new_height,
                                                   encoded, real_width,
-                                                  real_height, size // 1024))
+                                                  real_height, size))
                 else:
                     self.file_popup_is_large = True
                     view.update_popup(TEMPLATE % (width, height, encoded,
                                                   real_width, real_height,
-                                                  size // 1024))
+                                                  size))
             elif href == "save":
                 if need_conversion:
                     save(conv_file, conv_name, "file")
@@ -515,7 +518,7 @@ class HoverPreview(sublime_plugin.EventListener):
 
         view.show_popup(
             TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size // 1024),
+                        real_height, size),
             sublime.HIDE_ON_MOUSE_MOVE_AWAY,
             point,
             *view.viewport_extent(),
