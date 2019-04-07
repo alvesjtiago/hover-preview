@@ -46,17 +46,19 @@ def hover_preview_callback():
     """Get the settings and store them in global variables."""
 
     global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS,\
-        IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE, IMAGE_PATH_RE, IMAGE_URL_RE
+        IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE, IMAGE_PATH_RE,\
+        IMAGE_URL_RE, USE_SELECTION
 
     default_formats = ["png", "jpg", "jpeg",
                        "bmp", "gif", "ico", "svg", "svgz", "webp"]
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
     FORMAT_TO_CONVERT = tuple(settings.get(
         "formats_to_convert", [".svg", ".svgz", ".webp"]))
-    ALL_FORMATS = "|".join(settings.get('all_formats', default_formats))
+    ALL_FORMATS = "|".join(settings.get("all_formats", default_formats))
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
     SEARCH_MODE = settings.get("search_mode", "project")
     RECURSIVE = settings.get("recursive", True)
+    USE_SELECTION = settings.get("use_selection", False)
     IMAGE_PATH_RE = re.compile(r"([-@\w.]+\.(?:" + ALL_FORMATS + "))")
     IMAGE_URL_RE = re.compile(
         r"(?:(https?):)?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
@@ -514,9 +516,17 @@ class HoverPreview(sublime_plugin.EventListener):
         if hover_zone != sublime.HOVER_TEXT:
             return
 
-        string = get_string(view, point)
-        if not string:
-            return
+        # https://upload.wikimedia.org/wikipedia/ru/thumb/d/db/Монумент_Воинской_Славы_(Вид1).jpg/320px-Монумент_Воинской_Славы_(Вид1).jpg
+        # this url contains parentheses inside which make matching it
+        # impossible with the current implementation, so manually selecting it
+        # is our best shot
+        selection = view.selection[0]
+        if USE_SELECTION and not selection.empty():
+            string = view.substr(selection)
+        else:
+            string = get_string(view, point)
+            if not string:
+                return
 
         # =================DATA URL=================
         image_data_url = IMAGE_DATA_URL_RE.match(string)

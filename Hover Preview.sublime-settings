@@ -17,10 +17,16 @@
     // images that require conversion before rendering
     "formats_to_convert": [".svg", ".svgz", ".webp"],
 
-    // true:  takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories)
-    // Note that the path part is irrelevant, if you don't like this behavior you can set this to false and/or set search_mode to "file"
+    // true:  takes only the name part of the hovered file name and performs a
+    // recursive search in the project (directories and subdirectories)
+    // Note that the path part is irrelevant, if you don't like this behavior,
+    // you can set this to false and/or set search_mode to "file"
 
-    // false: sees if the hovered file name exists in the base folders of the project (directories only)
+    // false: checks if the hovered file name exists in the base folders of the project (directories only)
     // Note that this setting is only relevant if search_mode is set to "project"
-    "recursive": true
+    "recursive": true,
+
+    // if true, the first selected region will be used if not empty otherwise
+    // the hovered text will be used.
+    "use_selection": false
 }
