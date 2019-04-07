@@ -1,0 +1,7 @@
+
+Hover Image Preview v0.0.25
+===========================
+
+## New Features
+    - you can now use selected text, this is controlled by the `use_selection` setting
+    - images with size less than 1KB are expressed in Bytes
