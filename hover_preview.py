@@ -45,10 +45,11 @@ TEMP_DIR = tempfile.gettempdir()
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
 
-    global MAX_WIDTH, MAX_HEIGHT, MAX_CHARS, ALL_FORMATS, FORMAT_TO_CONVERT,\
-        SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME, IMAGE_URL_RE,\
-        IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
+    global PREVIEW_ON_HOVER, MAX_WIDTH, MAX_HEIGHT, MAX_CHARS, ALL_FORMATS,\
+        FORMAT_TO_CONVERT, SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME,\
+        IMAGE_URL_RE, IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
 
+    PREVIEW_ON_HOVER = settings.get("preview_on_hover", True)
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", (320, 240))
     MAX_CHARS = settings.get("max_chars", 2028) // 2
 
@@ -478,11 +479,10 @@ class HoverPreview(sublime_plugin.EventListener):
 
     def on_hover(self, view: sublime.View, point: int, hover_zone: int) -> None:
 
-        if hover_zone != sublime.HOVER_TEXT:
+        if not PREVIEW_ON_HOVER or hover_zone != sublime.HOVER_TEXT:
             return
 
         # trim the line if it's longer than "max_chars"
-
         line = view.line(point)
         line.a = max(line.a, point - MAX_CHARS)
         line.b = min(line.b, point + MAX_CHARS)

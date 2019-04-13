@@ -1,4 +1,7 @@
 {
+    // preview images on hover
+    "preview_on_hover": true,
+
     // the maximum number of characters to search in
     "max_chars": 2048,
 
