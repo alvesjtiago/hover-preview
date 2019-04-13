@@ -142,79 +142,6 @@ def fix_oversize(width: int, height: int) -> (int, int):
     return (new_width, new_height)
 
 
-def get_string(view: sublime.View, point: int) -> str:
-    """Return the string of the region containing `point` and delimeted by "", '' or ()."""
-
-    next_double_quote = view.find('"', point).a
-    next_single_quote = view.find("'", point).a
-    next_parentheses = view.find(r"\)", point).a
-
-    symbols_dict = {
-        next_double_quote: '"',
-        next_single_quote: "'",
-        next_parentheses: ')'
-    }
-
-    symbols = []
-    if next_double_quote != -1:
-        symbols.append(next_double_quote)
-    if next_single_quote != -1:
-        symbols.append(next_single_quote)
-    if next_parentheses != -1:
-        symbols.append(next_parentheses)
-
-    # Check if symbols exist from the mouse pointer forward
-    if not symbols:
-        return
-
-    closest_symbol = min(symbols)
-    symbol = symbols_dict[closest_symbol]
-
-    # All quotes in view
-    all_quotes = view.find_all(r"\(|\)" if symbol == ')' else symbol)
-
-    # Get the final region of quoted string
-    for item in all_quotes:
-        if item.a == closest_symbol:
-            final_region = item
-            break
-    # If there are no matches return
-    else:
-        return
-
-    # Get the initial region of quoted string
-    initial_region = all_quotes[all_quotes.index(final_region) - 1]
-
-    start = initial_region.b
-    end = final_region.a
-    if point < start or point > end:
-        return
-
-    string = view.substr(sublime.Region(start, end))
-    # we split the string on any number of space characters followed by 1 to 4
-    # digits, w or x, a comma then any number of space characters
-    # eg: " 2000w, "
-    # get the spans of the separators so we can deduce the spans of the strings
-    ls = [m.span() for m in re.finditer(r'\s+?\d{1,4}[wx],\s*', string)]
-    if ls:
-        # we remove the offset (start) from point because the spans start from 0
-        point -= start
-        # from the start to the start of the first separator
-        if 0 <= point <= ls[0][0]:
-            return view.substr(sublime.Region(start, ls[0][0] + start))
-
-        for i in range(len(ls)-1):
-            if ls[i][1] <= point <= ls[i+1][0]:
-                return view.substr(sublime.Region(ls[i][1] + start, ls[i+1][0] + start))
-
-        # from the end of the last separator to the end
-        if ls[-1][1] <= point <= end:
-            # there may be some 'left-overs' at the end
-            return view.substr(sublime.Region(ls[-1][1] + start, end + start)).split()[0]
-
-    return string
-
-
 def check_recursive(base_folders, name):
     """
     Return the path to the base folder and the path to the file if it is
@@ -275,7 +202,8 @@ def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
         image_folder, osp.dirname(base_folders[0]))
 
     if osp.exists(copy):
-        sublime.status_message("%s is already in %s" % (name, image_folder_rel))
+        sublime.status_message("%s is already in %s" %
+                               (name, image_folder_rel))
         return
 
     if kind == "file" and folder:
@@ -479,10 +407,11 @@ class HoverPreview(sublime_plugin.EventListener):
         # the data-url-based image's popup is too big
         self.data_url_popup_is_large = True
 
-    def handle_as_file(self, view: sublime.View, point: int, string: str, name: str) -> None:
+    def handle_as_file(self, view: sublime.View, point: int, string: str) -> None:
         """Handle the given `string` as a file."""
         # "hover_preview.png"
 
+        name = osp.basename(string)
         file, folder = get_file(view, string, name)
 
         # if file doesn't exist, return
@@ -552,29 +481,42 @@ class HoverPreview(sublime_plugin.EventListener):
         if hover_zone != sublime.HOVER_TEXT:
             return
 
-        string = get_string(view, point)
-        if not string:
-            return
+        # trim the line if it's longer than "max_chars"
+
+        line = view.line(point)
+        line.a = max(line.a, point - MAX_CHARS)
+        line.b = min(line.b, point + MAX_CHARS)
+
+        string = view.substr(line)
+        # the offset of point relative to the start of the line
+        offset_point = point - line.a
+
+        # search for the match in the string that contains the point
 
         # =================DATA URL=================
-        image_data_url = IMAGE_DATA_URL_RE.match(string)
-        if image_data_url:
-            ext, encoded = image_data_url.groups()
-            return self.handle_as_data_url(view, point, ext, encoded)
+        for match in IMAGE_DATA_URL_RE.finditer(string):
+            if match.start() <= offset_point <= match.end():
+                return self.handle_as_data_url(view, point, *match.groups())
 
         # ==================URL=====================
-        image_url = IMAGE_URL_RE.match(string)
-        if image_url:
-            protocol, name = image_url.groups()
-            # if the url doesn't start with http or https try adding it
-            # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
-            if not protocol:
-                string = "http://" + string.lstrip('/')
-            # don't block the app while handling the url
-            return sublime.set_timeout_async(lambda: self.handle_as_url(
-                view, point, string, name), 0)
+        for match in IMAGE_URL_RE.finditer(string):
+            if match.start() <= offset_point <= match.end():
+                string, protocol, name = match.group(0, 1, 2)
+                # if the url doesn't start with http or https try adding it
+                # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
+                if not protocol:
+                    string = "http://" + string.lstrip('/')
+                # don't block the app while handling the url
+                return sublime.set_timeout_async(lambda: self.handle_as_url(
+                    view, point, string, name), 0)
 
         # =================FILE=====================
-        name = osp.basename(string)
-        if IMAGE_PATH_RE.match(name):
-            return self.handle_as_file(view, point, string, name)
+        # find full and relative paths (e.g ./hover_preview.png)
+        for match in IMAGE_FILE_RE.finditer(string):
+            if match.start() <= offset_point <= match.end():
+                return self.handle_as_file(view, point, match.group(0))
+
+        # find file name (e.g hover_preview.png)
+        for match in IMAGE_FILE_NAME_RE.finditer(string):
+            if match.start() <= offset_point <= match.end():
+                return self.handle_as_file(view, point, match.group(0))
