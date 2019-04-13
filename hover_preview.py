@@ -45,11 +45,12 @@ TEMP_DIR = tempfile.gettempdir()
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
 
-    global MAX_WIDTH, MAX_HEIGHT, ALL_FORMATS, FORMAT_TO_CONVERT,\
+    global MAX_WIDTH, MAX_HEIGHT, MAX_CHARS, ALL_FORMATS, FORMAT_TO_CONVERT,\
         SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME, IMAGE_URL_RE,\
         IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
 
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
+    MAX_CHARS = settings.get("max_chars", 2028) // 2
 
     ALL_FORMATS = '|'.join(settings.get("all_formats",
                                         ["png", "jpg", "jpeg",
