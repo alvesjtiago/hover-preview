@@ -58,7 +58,7 @@ def hover_preview_callback():
                                          "svg", "svgz", "webp"])
                            )
     FORMAT_TO_CONVERT = tuple(settings.get("formats_to_convert",
-                                           [".svg", ".svgz", ".webp"]))
+                                           [".ico", ".svg", ".svgz", ".webp"]))
 
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
 
