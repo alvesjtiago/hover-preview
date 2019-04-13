@@ -49,26 +49,26 @@ def hover_preview_callback():
         SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME, IMAGE_URL_RE,\
         IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
 
-    MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
+    MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", (320, 240))
     MAX_CHARS = settings.get("max_chars", 2028) // 2
 
-    ALL_FORMATS = '|'.join(settings.get("all_formats",
-                                        ["png", "jpg", "jpeg",
-                                         "bmp", "gif", "ico",
-                                         "svg", "svgz", "webp"])
-                           )
-    FORMAT_TO_CONVERT = tuple('.' + ext for ext in settings.get("formats_to_convert",
-                                     ("svg", "svgz", "ico", "webp")))
+    FORMAT_TO_CONVERT = settings.get("formats_to_convert",
+                                     ("svg", "svgz", "ico", "webp"))
+    ALL_FORMATS = set(settings.get("simple_formats",
+                                   ("png", "jpg", "jpeg", "bmp", "gif"))
+                      ).union(FORMAT_TO_CONVERT)
+    FORMAT_TO_CONVERT = tuple('.' + ext for ext in FORMAT_TO_CONVERT)
 
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
 
     SEARCH_MODE = settings.get("search_mode", "project")
     RECURSIVE = settings.get("recursive", True)
 
+    formats_ored = '|'.join(ALL_FORMATS)
     IMAGE_URL_RE = re.compile(r"(?:(https?):)?"               # protocol
                               r"//[^\"']+"                    # body
                               r"/([^\"']+?"                   # name
-                              r"\.(?:" + ALL_FORMATS + "))")  # extension
+                              r"\.(?:" + formats_ored + "))")  # extension
 
     IMAGE_FILE_RE = re.compile(r"(?:[a-zA-Z]:|\.{0,2})"       # drive (e.g C:)
                                                               # or an optional
@@ -76,10 +76,10 @@ def hover_preview_callback():
                                r"[\\/]"                       # \ or /
                                r"[\\/\S|*]*?"                 # body
                                r"[-.@\w]+?"                   # name
-                               r"\.(?:" + ALL_FORMATS + ")"   # extension
+                               r"\.(?:" + formats_ored + ")"  # extension
                                )
-    IMAGE_FILE_NAME_RE = re.compile(r"[-.@\w.]+"                  # name
-                                    r"\.(?:" + ALL_FORMATS + ")"  # extension
+    IMAGE_FILE_NAME_RE = re.compile(r"[-.@\w.]+"                   # name
+                                    r"\.(?:" + formats_ored + ")"  # extension
                                     )
 
 
@@ -235,7 +235,7 @@ def convert(file: str, kind: str, name=None):
     """Convert the image to the format chosen from the quick panel and save it."""
 
     basename, ext = osp.splitext(name or osp.basename(file))
-    all_formats = ALL_FORMATS.split('|')
+    all_formats = ALL_FORMATS.copy()
     # remove the extension of the file
     all_formats.remove(ext[1:])
 
