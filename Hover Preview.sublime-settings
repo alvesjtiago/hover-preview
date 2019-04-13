@@ -18,7 +18,7 @@
     "all_formats": ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"],
 
     // images that require conversion before rendering
-    "formats_to_convert": [".svg", ".svgz", ".ico", ".webp"],
+    "formats_to_convert": ["svg", "svgz", "ico", "webp"],
 
     // true:  takes only the name part of the hovered file name and performs
     // a recursive search in the project (directories and subdirectories)
