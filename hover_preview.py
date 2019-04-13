@@ -36,8 +36,8 @@ DATA_URL_TEMPLATE = """
     </div>
     """
 
-IMAGE_DATA_URL_RE = re.compile(
-    r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/]+={0,2})")
+IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
+                               r"([a-zA-Z0-9+/]+={0,2})")
 
 TEMP_DIR = tempfile.gettempdir()
 
@@ -45,21 +45,41 @@ TEMP_DIR = tempfile.gettempdir()
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
 
-    global MAX_WIDTH, MAX_HEIGHT, FORMAT_TO_CONVERT, ALL_FORMATS,\
-        IMAGE_FOLDER_NAME, SEARCH_MODE, RECURSIVE, IMAGE_PATH_RE, IMAGE_URL_RE
+    global MAX_WIDTH, MAX_HEIGHT, ALL_FORMATS, FORMAT_TO_CONVERT,\
+        SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME, IMAGE_URL_RE,\
+        IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
 
-    default_formats = ["png", "jpg", "jpeg",
-                       "bmp", "gif", "ico", "svg", "svgz", "webp"]
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", [320, 240])
-    FORMAT_TO_CONVERT = tuple(settings.get(
-        "formats_to_convert", [".svg", ".svgz", ".webp"]))
-    ALL_FORMATS = "|".join(settings.get('all_formats', default_formats))
+
+    ALL_FORMATS = '|'.join(settings.get("all_formats",
+                                        ["png", "jpg", "jpeg",
+                                         "bmp", "gif", "ico",
+                                         "svg", "svgz", "webp"])
+                           )
+    FORMAT_TO_CONVERT = tuple(settings.get("formats_to_convert",
+                                           [".svg", ".svgz", ".webp"]))
+
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
+
     SEARCH_MODE = settings.get("search_mode", "project")
     RECURSIVE = settings.get("recursive", True)
-    IMAGE_PATH_RE = re.compile(r"([-@\w.]+\.(?:" + ALL_FORMATS + "))")
-    IMAGE_URL_RE = re.compile(
-        r"(?:(https?):)?//[^\"']+/([^\"']+?\.(?:" + ALL_FORMATS + "))")
+
+    IMAGE_URL_RE = re.compile(r"(?:(https?):)?"               # protocol
+                              r"//[^\"']+"                    # body
+                              r"/([^\"']+?"                   # name
+                              r"\.(?:" + ALL_FORMATS + "))")  # extension
+
+    IMAGE_FILE_RE = re.compile(r"(?:[a-zA-Z]:|\.{0,2})"       # drive (e.g C:)
+                                                              # or an optional
+                                                              # one or two dots
+                               r"[\\/]"                       # \ or /
+                               r"[\\/\S|*]*?"                 # body
+                               r"[-.@\w]+?"                   # name
+                               r"\.(?:" + ALL_FORMATS + ")"   # extension
+                               )
+    IMAGE_FILE_NAME_RE = re.compile(r"[-.@\w.]+"                  # name
+                                    r"\.(?:" + ALL_FORMATS + ")"  # extension
+                                    )
 
 
 def plugin_loaded():
