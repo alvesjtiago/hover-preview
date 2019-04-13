@@ -41,6 +41,10 @@ IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
 
 TEMP_DIR = tempfile.gettempdir()
 
+url_popup_is_large = True
+data_url_popup_is_large = True
+file_popup_is_large = True
+
 
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
@@ -247,276 +251,314 @@ def convert(file: str, kind: str, name=None):
     sublime.active_window().show_quick_panel(all_formats, on_done)
 
 
-class HoverPreview(sublime_plugin.EventListener):
+def handle_as_url(view: sublime.View, point: int, string: str, name: str) -> None:
+    """Handle the given `string` as a url."""
 
-    def __init__(self):
-        self.file_popup_is_large = True
-        self.url_popup_is_large = True
-        self.data_url_popup_is_large = True
+    # Let's assume this url as input:
+    # (https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg)
 
-    def handle_as_url(self, view: sublime.View, point: int, string: str, name: str) -> None:
-        """Handle the given `string` as a url."""
-
-        # Let's assume this url as input:
-        # (https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg)
-
-        # Download the image
-        # FIXME: avoid nested try-except clauses
+    # Download the image
+    # FIXME: avoid nested try-except clauses
+    try:
         try:
+            f = urlopen(unquote(string))  # <==
+        except:
             try:
-                f = urlopen(unquote(string))  # <==
+                url_path = quote(string).replace("%3A", ':', 1)
+                f = urlopen(url_path)
             except:
-                try:
-                    url_path = quote(string).replace("%3A", ':', 1)
-                    f = urlopen(url_path)
-                except:
-                    f = urlopen(string)
-        # don't fill the console with stack-trace when there`s no connection !!
-        except Exception as e:
-            print(e)
-            return
+                f = urlopen(string)
+    # don't fill the console with stack-trace when there`s no connection !!
+    except Exception as e:
+        print(e)
+        return
 
-        # file needs conversion ?
-        need_conversion = name.endswith(FORMAT_TO_CONVERT)  # => True
-        basename, ext = osp.splitext(name)  # => ("Example", ".svg")
+    # file needs conversion ?
+    need_conversion = name.endswith(FORMAT_TO_CONVERT)  # => True
+    basename, ext = osp.splitext(name)  # => ("Example", ".svg")
+    # create a temporary file
+    tmp_file = osp.join(TEMP_DIR,
+                        "tmp_image" + (ext if need_conversion else ".png")
+                        )  # => "TEMP_DIR/tmp_image.svg"
+
+    # Save downloaded data in the temporary file
+    content = f.read()
+    with open(tmp_file, "wb") as dst:
+        dst.write(content)
+
+    # if the file needs conversion, convert it then read data from the resulting png
+    if need_conversion:
+        # keep the image's temporary file and name for later use
+        conv_file = tmp_file  # => "TEMP_DIR/tmp_image.svg"
+        conv_name = name  # => "Example.svg"
+
+        # => "TEMP_DIR/tmp_image.png"
+        png = osp.splitext(tmp_file)[0] + ".png"
+
+        # use the magick command of Imagemagick to convert the image to png
+        magick(tmp_file, png)
+
+        # set temp_file and name to the png file
+        tmp_file = png  # => "TEMP_DIR/tmp_image.png"
+        name = basename + ".png"  # => "Example.png"
+
+        # read data from the resulting png
+        with open(tmp_file, "rb") as dst:
+            content = dst.read()
+
+    real_width, real_height, size = get_image_size(tmp_file)
+    width, height = get_dimensions(view, tmp_file)
+    encoded = str(base64.b64encode(content), "utf-8")
+    size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
+
+    def on_navigate(href):
+        global url_popup_is_large
+
+        if href == "resize":
+            if url_popup_is_large:
+                url_popup_is_large = False
+                new_width, new_height = fix_oversize(width, height)
+                view.update_popup(TEMPLATE % (new_width, new_height,
+                                              encoded, real_width,
+                                              real_height, size))
+            else:
+                url_popup_is_large = True
+                view.update_popup(TEMPLATE % (width, height, encoded,
+                                              real_width, real_height,
+                                              size))
+        elif href == "save":
+            if need_conversion:
+                save(conv_file, conv_name, "url")
+            else:
+                save(tmp_file, name, "url")
+        elif href == "save_as":
+            if need_conversion:
+                convert(conv_file, "url", conv_name)
+            else:
+                convert(tmp_file, "url", name)
+        else:
+            sublime.active_window().open_file(file)
+
+    view.show_popup(
+        TEMPLATE % (width, height, encoded, real_width,
+                    real_height, size),
+        sublime.HIDE_ON_MOUSE_MOVE_AWAY,
+        point,
+        *view.viewport_extent(),
+        on_navigate=on_navigate
+    )
+    # the url-based image's popup is too big
+    url_popup_is_large = True
+
+
+def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str) -> None:
+    """Handle the string as a data url."""
+
+    # create a temporary file
+    tmp_file = osp.join(TEMP_DIR, "tmp_data_image." + ext)
+    file_hash = int(hashlib.sha1(encoded.encode('utf-8')
+                                 ).hexdigest(), 16) % (10 ** 8)
+    name = str(file_hash) + "." + ext
+
+    # Save downloaded data in the temporary file
+    try:
+        dst = open(tmp_file, "wb")
+        dst.write(base64.b64decode(encoded))
+    except Exception as e:
+        print(e)
+        return
+    finally:
+        dst.close()
+
+    real_width, real_height, size = get_image_size(tmp_file)
+    width, height = get_dimensions(view, tmp_file)
+    size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
+
+    def on_navigate(href):
+        global data_url_popup_is_large
+
+        if href == "resize":
+            if data_url_popup_is_large:
+                data_url_popup_is_large = False
+                new_width, new_height = fix_oversize(width, height)
+                view.update_popup(DATA_URL_TEMPLATE % (new_width,
+                                                       new_height, ext,
+                                                       encoded, real_width,
+                                                       real_height,
+                                                       size))
+            else:
+                data_url_popup_is_large = True
+                view.update_popup(DATA_URL_TEMPLATE % (width, height, ext,
+                                                       encoded, real_width,
+                                                       real_height,
+                                                       size))
+        elif href == "save":
+            save(tmp_file, name, "data_url")
+        elif href == "save_as":
+            convert(tmp_file, "data_url", name)
+        else:
+            sublime.active_window().open_file(tmp_file)
+
+    view.show_popup(
+        DATA_URL_TEMPLATE % (width, height, ext, encoded, real_width,
+                             real_height, size),
+        sublime.HIDE_ON_MOUSE_MOVE_AWAY,
+        point,
+        *view.viewport_extent(),
+        on_navigate=on_navigate
+    )
+    # the data-url-based image's popup is too big
+    data_url_popup_is_large = True
+
+
+def handle_as_file(view: sublime.View, point: int, string: str) -> None:
+    """Handle the given `string` as a file."""
+    # "hover_preview.png"
+
+    name = osp.basename(string)
+    file, folder = get_file(view, string, name)
+
+    # if file doesn't exist, return
+    if not osp.isfile(file):
+        return
+
+    # does the file need conversion ?
+    need_conversion = file.endswith(FORMAT_TO_CONVERT)
+
+    # if the file needs conversion, convert it and read data from the resulting png
+    if need_conversion:
+        # keep the image's file and name for later use
+        conv_file = file
+        conv_name = name
+
         # create a temporary file
-        tmp_file = osp.join(TEMP_DIR,
-                            "tmp_image" + (ext if need_conversion else ".png")
-                            )  # => "TEMP_DIR/tmp_image.svg"
+        tmp_file = osp.join(TEMP_DIR, "tmp_png.png")
+        name = osp.splitext(name)[0] + ".png"
 
-        # Save downloaded data in the temporary file
-        content = f.read()
-        with open(tmp_file, "wb") as dst:
-            dst.write(content)
+        # use the magick command of Imagemagick to convert the image to png
+        magick(file, tmp_file)
 
-        # if the file needs conversion, convert it then read data from the resulting png
-        if need_conversion:
-            # keep the image's temporary file and name for later use
-            conv_file = tmp_file  # => "TEMP_DIR/tmp_image.svg"
-            conv_name = name  # => "Example.svg"
+        file = tmp_file
 
-            # => "TEMP_DIR/tmp_image.png"
-            png = osp.splitext(tmp_file)[0] + ".png"
+    with open(file, "rb") as f:
+        encoded = str(base64.b64encode(f.read()), "utf-8")
 
-            # use the magick command of Imagemagick to convert the image to png
-            magick(tmp_file, png)
+    real_width, real_height, size = get_image_size(file)
+    width, height = get_dimensions(view, file)
+    size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
-            # set temp_file and name to the png file
-            tmp_file = png  # => "TEMP_DIR/tmp_image.png"
-            name = basename + ".png"  # => "Example.png"
+    def on_navigate(href):
+        global file_popup_is_large
 
-            # read data from the resulting png
-            with open(tmp_file, "rb") as dst:
-                content = dst.read()
-
-        real_width, real_height, size = get_image_size(tmp_file)
-        width, height = get_dimensions(view, tmp_file)
-        encoded = str(base64.b64encode(content), "utf-8")
-        size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
-
-        def on_navigate(href):
-            if href == "resize":
-                if self.url_popup_is_large:
-                    self.url_popup_is_large = False
-                    new_width, new_height = fix_oversize(width, height)
-                    view.update_popup(TEMPLATE % (new_width, new_height,
-                                                  encoded, real_width,
-                                                  real_height, size))
-                else:
-                    self.url_popup_is_large = True
-                    view.update_popup(TEMPLATE % (width, height, encoded,
-                                                  real_width, real_height,
-                                                  size))
-            elif href == "save":
-                if need_conversion:
-                    save(conv_file, conv_name, "url")
-                else:
-                    save(tmp_file, name, "url")
-            elif href == "save_as":
-                if need_conversion:
-                    convert(conv_file, "url", conv_name)
-                else:
-                    convert(tmp_file, "url", name)
+        if href == "resize":
+            if file_popup_is_large:
+                file_popup_is_large = False
+                new_width, new_height = fix_oversize(width, height)
+                view.update_popup(TEMPLATE % (new_width, new_height,
+                                              encoded, real_width,
+                                              real_height, size))
             else:
-                sublime.active_window().open_file(file)
-
-        view.show_popup(
-            TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size),
-            sublime.HIDE_ON_MOUSE_MOVE_AWAY,
-            point,
-            *view.viewport_extent(),
-            on_navigate=on_navigate
-        )
-        # the url-based image's popup is too big
-        self.url_popup_is_large = True
-
-    def handle_as_data_url(self, view: sublime.View, point: int, ext: str, encoded: str) -> None:
-        """Handle the string as a data url."""
-
-        # create a temporary file
-        tmp_file = osp.join(TEMP_DIR, "tmp_data_image." + ext)
-        file_hash = int(hashlib.sha1(encoded.encode('utf-8')
-                                     ).hexdigest(), 16) % (10 ** 8)
-        name = str(file_hash) + "." + ext
-
-        # Save downloaded data in the temporary file
-        try:
-            dst = open(tmp_file, "wb")
-            dst.write(base64.b64decode(encoded))
-        except Exception as e:
-            print(e)
-            return
-        finally:
-            dst.close()
-
-        real_width, real_height, size = get_image_size(tmp_file)
-        width, height = get_dimensions(view, tmp_file)
-        size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
-
-        def on_navigate(href):
-            if href == "resize":
-                if self.data_url_popup_is_large:
-                    self.data_url_popup_is_large = False
-                    new_width, new_height = fix_oversize(width, height)
-                    view.update_popup(DATA_URL_TEMPLATE % (new_width,
-                                                           new_height, ext,
-                                                           encoded, real_width,
-                                                           real_height,
-                                                           size))
-                else:
-                    self.data_url_popup_is_large = True
-                    view.update_popup(DATA_URL_TEMPLATE % (width, height, ext,
-                                                           encoded, real_width,
-                                                           real_height,
-                                                           size))
-            elif href == "save":
-                save(tmp_file, name, "data_url")
-            elif href == "save_as":
-                convert(tmp_file, "data_url", name)
+                file_popup_is_large = True
+                view.update_popup(TEMPLATE % (width, height, encoded,
+                                              real_width, real_height,
+                                              size))
+        elif href == "save":
+            if need_conversion:
+                save(conv_file, conv_name, "file")
             else:
-                sublime.active_window().open_file(tmp_file)
+                save(file, name, "file", folder)
+        elif href == "save_as":
+            convert(conv_file if need_conversion else file, "file")
+        else:
+            sublime.active_window().open_file(file)
 
-        view.show_popup(
-            DATA_URL_TEMPLATE % (width, height, ext, encoded, real_width,
-                                 real_height, size),
-            sublime.HIDE_ON_MOUSE_MOVE_AWAY,
-            point,
-            *view.viewport_extent(),
-            on_navigate=on_navigate
-        )
-        # the data-url-based image's popup is too big
-        self.data_url_popup_is_large = True
+    view.show_popup(
+        TEMPLATE % (width, height, encoded, real_width,
+                    real_height, size),
+        sublime.HIDE_ON_MOUSE_MOVE_AWAY,
+        point,
+        *view.viewport_extent(),
+        on_navigate=on_navigate)
+    # the file-based image's popup is too big
+    file_popup_is_large = True
 
-    def handle_as_file(self, view: sublime.View, point: int, string: str) -> None:
-        """Handle the given `string` as a file."""
-        # "hover_preview.png"
 
-        name = osp.basename(string)
-        file, folder = get_file(view, string, name)
+def preview_image(view: sublime.View, point: int):
+    """Find the image path or url and Preview the image if possible."""
 
-        # if file doesn't exist, return
-        if not osp.isfile(file):
-            return
+    # trim the line if it's longer than "max_chars"
+    line = view.line(point)
+    line.a = max(line.a, point - MAX_CHARS)
+    line.b = min(line.b, point + MAX_CHARS)
 
-        # does the file need conversion ?
-        need_conversion = file.endswith(FORMAT_TO_CONVERT)
+    string = view.substr(line)
+    # the offset of point relative to the start of the line
+    offset_point = point - line.a
 
-        # if the file needs conversion, convert it and read data from the resulting png
-        if need_conversion:
-            # keep the image's file and name for later use
-            conv_file = file
-            conv_name = name
+    # search for the match in the string that contains the point
 
-            # create a temporary file
-            tmp_file = osp.join(TEMP_DIR, "tmp_png.png")
-            name = osp.splitext(name)[0] + ".png"
+    # ==================URL=====================
+    for match in IMAGE_URL_RE.finditer(string):
+        if match.start() <= offset_point <= match.end():
+            string, protocol, name = match.group(0, 1, 2)
+            # if the url doesn't start with http or https try adding it
+            # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
+            if not protocol:
+                string = "http://" + string.lstrip('/')
+            # don't block the app while handling the url
+            return sublime.set_timeout_async(lambda: handle_as_url(
+                view, point, string, name), 0)
 
-            # use the magick command of Imagemagick to convert the image to png
-            magick(file, tmp_file)
+    # =================DATA URL=================
+    for match in IMAGE_DATA_URL_RE.finditer(string):
+        if match.start() <= offset_point <= match.end():
+            return handle_as_data_url(view, point, *match.groups())
 
-            file = tmp_file
+    # =================FILE=====================
+    # find full and relative paths (e.g ./hover_preview.png)
+    for match in IMAGE_FILE_RE.finditer(string):
+        if match.start() <= offset_point <= match.end():
+            return handle_as_file(view, point, match.group(0))
 
-        with open(file, "rb") as f:
-            encoded = str(base64.b64encode(f.read()), "utf-8")
+    # find file name (e.g hover_preview.png)
+    for match in IMAGE_FILE_NAME_RE.finditer(string):
+        if match.start() <= offset_point <= match.end():
+            return handle_as_file(view, point, match.group(0))
 
-        real_width, real_height, size = get_image_size(file)
-        width, height = get_dimensions(view, file)
-        size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
-        def on_navigate(href):
-            if href == "resize":
-                if self.file_popup_is_large:
-                    self.file_popup_is_large = False
-                    new_width, new_height = fix_oversize(width, height)
-                    view.update_popup(TEMPLATE % (new_width, new_height,
-                                                  encoded, real_width,
-                                                  real_height, size))
-                else:
-                    self.file_popup_is_large = True
-                    view.update_popup(TEMPLATE % (width, height, encoded,
-                                                  real_width, real_height,
-                                                  size))
-            elif href == "save":
-                if need_conversion:
-                    save(conv_file, conv_name, "file")
-                else:
-                    save(file, name, "file", folder)
-            elif href == "save_as":
-                convert(conv_file if need_conversion else file, "file")
-            else:
-                sublime.active_window().open_file(file)
-
-        view.show_popup(
-            TEMPLATE % (width, height, encoded, real_width,
-                        real_height, size),
-            sublime.HIDE_ON_MOUSE_MOVE_AWAY,
-            point,
-            *view.viewport_extent(),
-            on_navigate=on_navigate)
-        # the file-based image's popup is too big
-        self.file_popup_is_large = True
+class HoverPreviewImage(sublime_plugin.EventListener):
 
     def on_hover(self, view: sublime.View, point: int, hover_zone: int) -> None:
 
         if not PREVIEW_ON_HOVER or hover_zone != sublime.HOVER_TEXT:
             return
 
-        # trim the line if it's longer than "max_chars"
-        line = view.line(point)
+        preview_image(view, point)
+
+
+class PreviewImageCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit, event=None):
+        if event:
+            preview_image(self.view, self.view.window_to_text((event['x'], event['y'])))
+        else:
+            preview_image(self.view, self.view.selection[0].a)
+
+    def is_visible(self, event):
+        point = self.view.window_to_text((event['x'], event['y']))
+        line = self.view.line(point)
         line.a = max(line.a, point - MAX_CHARS)
         line.b = min(line.b, point + MAX_CHARS)
 
-        string = view.substr(line)
-        # the offset of point relative to the start of the line
-        offset_point = point - line.a
+        string = self.view.substr(line)
+        point -= line.a
 
-        # search for the match in the string that contains the point
+        for pattern in (IMAGE_URL_RE, IMAGE_DATA_URL_RE,
+                        IMAGE_FILE_RE, IMAGE_FILE_NAME_RE):
+            for match in pattern.finditer(string):
+                if match.start() <= point <= match.end():
+                    return True
+        return False
 
-        # =================DATA URL=================
-        for match in IMAGE_DATA_URL_RE.finditer(string):
-            if match.start() <= offset_point <= match.end():
-                return self.handle_as_data_url(view, point, *match.groups())
-
-        # ==================URL=====================
-        for match in IMAGE_URL_RE.finditer(string):
-            if match.start() <= offset_point <= match.end():
-                string, protocol, name = match.group(0, 1, 2)
-                # if the url doesn't start with http or https try adding it
-                # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
-                if not protocol:
-                    string = "http://" + string.lstrip('/')
-                # don't block the app while handling the url
-                return sublime.set_timeout_async(lambda: self.handle_as_url(
-                    view, point, string, name), 0)
-
-        # =================FILE=====================
-        # find full and relative paths (e.g ./hover_preview.png)
-        for match in IMAGE_FILE_RE.finditer(string):
-            if match.start() <= offset_point <= match.end():
-                return self.handle_as_file(view, point, match.group(0))
-
-        # find file name (e.g hover_preview.png)
-        for match in IMAGE_FILE_NAME_RE.finditer(string):
-            if match.start() <= offset_point <= match.end():
-                return self.handle_as_file(view, point, match.group(0))
+    def want_event(self):
+        return True
