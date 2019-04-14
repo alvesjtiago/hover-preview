@@ -1,0 +1,17 @@
+
+Hover Image Preview v0.1.0
+===========================
+
+## New Features
+    - images are detected in any location (not only between "", '' or ()) (#15, #31)
+    - you can now preview images with a keybinding, a mousbinding or from the context menu, for more details see the README (#24)
+    - you can now disable the preview on hover
+    - images with size less than 1KB are now expressed in Bytes
+
+## Fixes
+    - .ico images are not rendered
+    - size of OKB is shown for images with size less than 1KB
+
+## Notes
+    - the "all_formats" settings is deprecated
+    - the "simple_formats" setting is added, it takes an array of image formats supported by sublime text popups (i.e don't need conversion)
