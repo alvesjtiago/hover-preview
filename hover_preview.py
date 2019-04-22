@@ -41,6 +41,9 @@ IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
 
 TEMP_DIR = tempfile.gettempdir()
 
+# just for type hints
+View = sublime.View
+
 url_popup_is_large = True
 data_url_popup_is_large = True
 file_popup_is_large = True
@@ -103,7 +106,7 @@ def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
-def get_dimensions(view: sublime.View, path: str) -> (int, int):
+def get_dimensions(view: View, path: str) -> (int, int):
     """Return the width and height from the given path."""
 
     # Allow max automatic detection and remove gutter
@@ -112,7 +115,7 @@ def get_dimensions(view: sublime.View, path: str) -> (int, int):
     max_height *= 0.75
     max_ratio = max_height / max_width
 
-    # Get image get_dimensions
+    # Get image dimensions
     try:
         width, height, _ = get_image_size(path)
     except UnknownImageFormat:
@@ -160,7 +163,7 @@ def check_recursive(base_folders, name):
                     return osp.dirname(base_folder), root
 
 
-def get_file(view: sublime.View, string: str, name: str) -> (str, bool):
+def get_file(view: View, string: str, name: str) -> (str, bool):
     """
     Try to get a file from the given `string` and test whether it's in the
     project directory.
@@ -251,7 +254,7 @@ def convert(file: str, kind: str, name=None):
     sublime.active_window().show_quick_panel(all_formats, on_done)
 
 
-def handle_as_url(view: sublime.View, point: int, string: str, name: str) -> None:
+def handle_as_url(view: View, point: int, string: str, name: str) -> None:
     """Handle the given `string` as a url."""
 
     # Let's assume this url as input:
@@ -351,7 +354,7 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str) -> Non
     url_popup_is_large = True
 
 
-def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str) -> None:
+def handle_as_data_url(view: View, point: int, ext: str, encoded: str) -> None:
     """Handle the string as a data url."""
 
     # create a temporary file
@@ -411,7 +414,7 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str) -
     data_url_popup_is_large = True
 
 
-def handle_as_file(view: sublime.View, point: int, string: str) -> None:
+def handle_as_file(view: View, point: int, string: str) -> None:
     """Handle the given `string` as a file."""
     # "hover_preview.png"
 
@@ -483,7 +486,7 @@ def handle_as_file(view: sublime.View, point: int, string: str) -> None:
     file_popup_is_large = True
 
 
-def preview_image(view: sublime.View, point: int):
+def preview_image(view: View, point: int):
     """Find the image path or url and Preview the image if possible."""
 
     # trim the line if it's longer than "max_chars"
