@@ -3,4 +3,5 @@ Hover Image Preview v0.0.21
 ===========================
 
 ## Fixes
-    - fix the magick command for windows
+
+- fix the magick command for windows

@@ -3,18 +3,21 @@ Hover Image Preview v0.0.19
 ===========================
 
 ## New Features
-    - you can now save previewed images
-    - you can now open downloaded images
-    - added svg support
-    - added support for absolute paths
-    - added support for a wider range of urls
-    - added search modes
-    - downloading and rendering images is non blocking
+
+- you can now save previewed images
+- you can now open downloaded images
+- added svg support
+- added support for absolute paths
+- added support for a wider range of urls
+- added search modes
+- downloading and rendering images is non blocking
 
 ## Fixes
-    - #11 : svg support
-    - #20 : support for absolute paths
-    - #24 : sublime text hangs for too long when hovering over a url
+
+- #11 : svg support
+- #20 : support for absolute paths
+- #24 : sublime text hangs for too long when hovering over a url
 
 ## Requirements
-    - Imagemagick is required for svg support, get it from https://www.imagemagick.org/script/download.php and make sure "magick" command is in your path
+
+- Imagemagick is required for svg support, get it from https://www.imagemagick.org/script/download.php and make sure "magick" command is in your path
