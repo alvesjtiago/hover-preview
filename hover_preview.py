@@ -418,7 +418,7 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str) -> None:
 
 def handle_as_file(view: View, point: int, string: str) -> None:
     """Handle the given `string` as a file."""
-    # "hover_preview.png"
+    # "screenshot.png"
 
     name = osp.basename(string)
     file, folder = get_file(view, string, name)
@@ -520,12 +520,12 @@ def preview_image(view: View, point: int):
             return handle_as_data_url(view, point, *match.groups())
 
     # =================FILE=====================
-    # find full and relative paths (e.g ./hover_preview.png)
+    # find full and relative paths (e.g ./screenshot.png)
     for match in IMAGE_FILE_RE.finditer(string):
         if match.start() <= offset_point <= match.end():
             return handle_as_file(view, point, match.group(0))
 
-    # find file name (e.g hover_preview.png)
+    # find file name (e.g screenshot.png)
     for match in IMAGE_FILE_NAME_RE.finditer(string):
         if match.start() <= offset_point <= match.end():
             return handle_as_file(view, point, match.group(0))
