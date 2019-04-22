@@ -44,6 +44,7 @@ TEMP_DIR = tempfile.gettempdir()
 # just for type hints
 View = sublime.View
 
+# popup size flags
 url_popup_is_large = True
 data_url_popup_is_large = True
 file_popup_is_large = True
@@ -73,21 +74,22 @@ def hover_preview_callback():
     RECURSIVE = settings.get("recursive", True)
 
     formats_ored = '|'.join(ALL_FORMATS)
-    IMAGE_URL_RE = re.compile(r"(?:(https?):)?"               # protocol
-                              r"//[^\"']+"                    # body
-                              r"/([^\"']+?"                   # name
-                              r"\.(?:" + formats_ored + "))")  # extension
+    IMAGE_URL_RE = re.compile(r"(?:(https?)://)?"                       # http(s)://
+                              r"(?:[^./\"'\s]+\.){1,3}[^/\"'.\s]+/"     # host
+                              r"(?:[^/\"'\s]+/)*"                       # path
+                              r"([^\"'/\s]+?\.(?:%s))" % formats_ored)  # name
 
-    IMAGE_FILE_RE = re.compile(r"(?:[a-zA-Z]:|\.{0,2})"       # drive (e.g C:)
-                                                              # or an optional
-                                                              # one or two dots
-                               r"[\\/]"                       # \ or /
-                               r"[\\/\S|*]*?"                 # body
-                               r"[-.@\w]+?"                   # name
-                               r"\.(?:" + formats_ored + ")"  # extension
+    IMAGE_FILE_RE = re.compile(r"(?:"                 # drive
+                                    r"\w:\\|"         # Windows (e.g C:\)
+                                    r"\\\\|"          # Linux (\\)
+                                    r"\.{0,2}[\\/]"   # Mac OS and/or relative
+                               r")"
+                               r"(?:[-.@\w]+?[\\/])*"     # body
+                               r"[-.@\w]+?"               # name
+                               r"\.(?:%s)" % formats_ored   # extension
                                )
-    IMAGE_FILE_NAME_RE = re.compile(r"[-.@\w.]+"                   # name
-                                    r"\.(?:" + formats_ored + ")"  # extension
+    IMAGE_FILE_NAME_RE = re.compile(r"[-.@\w]+"               # name
+                                    r"\.(?:%s)" % formats_ored  # extension
                                     )
 
 
@@ -505,10 +507,10 @@ def preview_image(view: View, point: int):
         if match.start() <= offset_point <= match.end():
             string, protocol, name = match.group(0, 1, 2)
             # if the url doesn't start with http or https try adding it
-            # "//www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
+            # "www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
             if not protocol:
-                string = "http://" + string.lstrip('/')
-            # don't block the app while handling the url
+                string = "http://" + string
+            # don't block ST while handling the url
             return sublime.set_timeout_async(lambda: handle_as_url(
                 view, point, string, name), 0)
 
