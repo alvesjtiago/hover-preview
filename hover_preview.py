@@ -13,6 +13,8 @@ from urllib.request import urlopen
 import sublime
 import sublime_plugin
 
+from sublime import View
+
 from .get_image_size import get_image_size, UnknownImageFormat
 
 
@@ -40,9 +42,6 @@ IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
                                r"([a-zA-Z0-9+/]+={0,2})")
 
 TEMP_DIR = tempfile.gettempdir()
-
-# just for type hints
-View = sublime.View
 
 # popup size flags
 url_popup_is_large = True
@@ -108,7 +107,7 @@ def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
-def get_dimensions(view: View, path: str) -> (int, int):
+def get_dimensions(view: View, path: str):
     """Return the width and height from the given path."""
 
     # Allow max automatic detection and remove gutter
@@ -121,7 +120,7 @@ def get_dimensions(view: View, path: str) -> (int, int):
     try:
         width, height, _ = get_image_size(path)
     except UnknownImageFormat:
-        return (-1, -1)
+        return -1, -1
 
     # First check height since it's the smallest vector
     if height / width >= max_ratio and height > max_height:
@@ -133,10 +132,10 @@ def get_dimensions(view: View, path: str) -> (int, int):
         width *= ratio
         height *= ratio
 
-    return (width, height)
+    return width, height
 
 
-def fix_oversize(width: int, height: int) -> (int, int):
+def fix_oversize(width: int, height: int):
     """Shrink the popup if its bigger than max_width x max_height."""
 
     new_width, new_height = width, height
@@ -149,7 +148,7 @@ def fix_oversize(width: int, height: int) -> (int, int):
             ratio = MAX_HEIGHT / height
             new_height = MAX_HEIGHT
             new_width = width * ratio
-    return (new_width, new_height)
+    return new_width, new_height
 
 
 def check_recursive(base_folders, name):
@@ -165,7 +164,7 @@ def check_recursive(base_folders, name):
                     return osp.dirname(base_folder), root
 
 
-def get_file(view: View, string: str, name: str) -> (str, bool):
+def get_file(view: View, string: str, name: str):
     """
     Try to get a file from the given `string` and test whether it's in the
     project directory.
@@ -173,7 +172,7 @@ def get_file(view: View, string: str, name: str) -> (str, bool):
 
     # if it's an absolute path get it
     if osp.isabs(string):
-        return (string, None)
+        return string, None
 
     # if search_mode: "project", search only in project
     elif SEARCH_MODE == "project":
@@ -184,21 +183,21 @@ def get_file(view: View, string: str, name: str) -> (str, bool):
             ch_rec = check_recursive(base_folders, name)
             if ch_rec:
                 base_folder, root = ch_rec
-                return (osp.join(root, name), base_folder)
-            return ("", None)
+                return osp.join(root, name), base_folder
+            return "", None
         else:
             # search only in base folders for the relative path
             for base_folder in base_folders:
                 file_name = osp.normpath(osp.join(base_folder, string))
                 if osp.exists(file_name):
-                    return (file_name, base_folder)
-            return ("", None)
+                    return file_name, base_folder
+            return "", None
     # if search_mode: "file" join the relative path to the file path
     else:
-        return (osp.normpath(osp.join(osp.dirname(view.file_name()), string)), None)
+        return osp.normpath(osp.join(osp.dirname(view.file_name()), string)), None
 
 
-def save(file: str, name: str, kind: str, folder=None, convert=False) -> None:
+def save(file: str, name: str, kind: str, folder=None, convert=False):
     """Save the image if it's not already in the project folders."""
 
     # all folders in the project
@@ -256,7 +255,7 @@ def convert(file: str, kind: str, name=None):
     sublime.active_window().show_quick_panel(all_formats, on_done)
 
 
-def handle_as_url(view: View, point: int, string: str, name: str) -> None:
+def handle_as_url(view: View, point: int, string: str, name: str):
     """Handle the given `string` as a url."""
 
     # Let's assume this url as input:
@@ -356,7 +355,7 @@ def handle_as_url(view: View, point: int, string: str, name: str) -> None:
     url_popup_is_large = True
 
 
-def handle_as_data_url(view: View, point: int, ext: str, encoded: str) -> None:
+def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
     """Handle the string as a data url."""
 
     # create a temporary file
@@ -416,7 +415,7 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str) -> None:
     data_url_popup_is_large = True
 
 
-def handle_as_file(view: View, point: int, string: str) -> None:
+def handle_as_file(view: View, point: int, string: str):
     """Handle the given `string` as a file."""
     # "screenshot.png"
 
@@ -533,7 +532,7 @@ def preview_image(view: View, point: int):
 
 class HoverPreviewImage(sublime_plugin.EventListener):
 
-    def on_hover(self, view: sublime.View, point: int, hover_zone: int) -> None:
+    def on_hover(self, view: View, point: int, hover_zone: int):
 
         if not PREVIEW_ON_HOVER or hover_zone != sublime.HOVER_TEXT:
             return
