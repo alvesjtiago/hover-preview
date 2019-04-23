@@ -13,9 +13,10 @@ Hover Image Preview v0.1.0
 ## Fixes
 
 - .ico images are not rendered
-- size of OKB is shown for images with size less than 1KB
+- size of 0KB is shown for images with size less than 1KB
 
 ## Notes
 
 - the "all_formats" settings is deprecated
 - the "simple_formats" setting is added, it takes an array of image formats supported by sublime text popups (i.e don't need conversion)
+- "formats_to_convert" don't start with dot "." anymore to make them consistent with "simple_formats", if you've already overridden the setting you must remove leading dots
