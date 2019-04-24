@@ -14,15 +14,6 @@
     // if it makes a valid image path
     "search_mode": "project",
 
-    // the name of the folder in wich saved images will be stored
-    "image_folder_name": "Hovered Images",
-
-    // image formats supported by sublime text popups
-    "simple_formats": ["png", "jpg", "jpeg", "bmp", "gif"],
-
-    // images that require conversion before rendering
-    "formats_to_convert": ["svg", "svgz", "ico", "webp"],
-
     // true:  takes only the name part of the hovered file name and performs
     // a recursive search in the project (directories and subdirectories)
 
@@ -31,5 +22,14 @@
 
     // false: checks if the hovered file name exists in the base folders of the project (directories only)
     // Note that this setting is only relevant if search_mode is set to "project"
-    "recursive": true
+    "recursive": true,
+
+    // the name of the folder in wich saved images will be stored
+    "image_folder_name": "Hovered Images",
+
+    // image formats supported by sublime text popups
+    "simple_formats": ["png", "jpg", "jpeg", "bmp", "gif"],
+
+    // images that require conversion before rendering
+    "formats_to_convert": ["svg", "svgz", "ico", "webp"],
 }
