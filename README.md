@@ -2,7 +2,7 @@
 
 The Sublime Text 3 image previewing plugin.
 
-![Screenshot of Hover Preview, a plugin for Sublime Text 3 by @alvesjtiago](hover_preview.png)
+![Screenshot of Hover Preview, a plugin for Sublime Text 3 by @alvesjtiago](screenshot.png)
 
 ## Usage
 
