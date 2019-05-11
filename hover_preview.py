@@ -341,7 +341,7 @@ def handle_as_url(view: View, point: int, string: str, name: str):
             else:
                 convert(tmp_file, "url", name)
         else:
-            sublime.active_window().open_file(file)
+            sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
         TEMPLATE % (width, height, encoded, real_width,
