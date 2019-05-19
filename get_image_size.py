@@ -40,18 +40,24 @@ image_fields = ['path', 'type', 'file_size', 'width', 'height']
 
 
 class Image(collections.namedtuple('Image', image_fields)):
+
     def to_str_row(self):
         return ("%d\t%d\t%d\t%s\t%s" % (
             self.width,
             self.height,
             self.file_size,
             self.type,
-            self.path.replace('\t', '\\t'), ))
+            self.path.replace('\t', '\\t'),
+        ))
 
     def to_str_row_verbose(self):
-        return ("%d\t%d\t%d\t%s\t%s\t##%s" %
-                (self.width, self.height, self.file_size, self.type,
-                 self.path.replace('\t', '\\t'), self))
+        return ("%d\t%d\t%d\t%s\t%s\t##%s" % (
+            self.width,
+            self.height,
+            self.file_size,
+            self.type,
+            self.path.replace('\t', '\\t'),
+            self))
 
     def to_str_json(self, indent=None):
         return json.dumps(self._asdict(), indent=indent)
@@ -59,8 +65,8 @@ class Image(collections.namedtuple('Image', image_fields)):
 
 def get_image_size(file_path):
     """
-    Return (width, height, file_size) for a given img file content - no 
-    external dependencies except the os and struct builtin modules
+    Return (width, height, file_size) for a given img file content - no external
+    dependencies except the os and struct builtin modules
     """
     img = get_image_metadata(file_path)
     return (img.width, img.height, img.file_size)
@@ -86,37 +92,38 @@ def get_image_metadata(file_path):
         data = input.read(26)
         msg = " raised while trying to decode as JPEG."
 
-        if size >= 10 and data[:6] in (b'GIF87a', b'GIF89a'):
+        if (size >= 10) and data[:6] in (b'GIF87a', b'GIF89a'):
             # GIFs
             imgtype = GIF
             w, h = struct.unpack("<HH", data[6:10])
             width = int(w)
             height = int(h)
-        elif size >= 24 and data.startswith(b'\211PNG\r\n\032\n') and data[12:16] == b'IHDR':
+        elif ((size >= 24) and data.startswith(b'\211PNG\r\n\032\n')
+              and (data[12:16] == b'IHDR')):
             # PNGs
             imgtype = PNG
             w, h = struct.unpack(">LL", data[16:24])
             width = int(w)
             height = int(h)
-        elif size >= 16 and data.startswith(b'\211PNG\r\n\032\n'):
+        elif (size >= 16) and data.startswith(b'\211PNG\r\n\032\n'):
             # older PNGs
             imgtype = PNG
             w, h = struct.unpack(">LL", data[8:16])
             width = int(w)
             height = int(h)
-        elif size >= 2 and data.startswith(b'\377\330'):
+        elif (size >= 2) and data.startswith(b'\377\330'):
             # JPEG
             imgtype = JPEG
             input.seek(0)
             input.read(2)
             b = input.read(1)
             try:
-                while b and ord(b) != 0xDA:
-                    while ord(b) != 0xFF:
+                while (b and ord(b) != 0xDA):
+                    while (ord(b) != 0xFF):
                         b = input.read(1)
-                    while ord(b) == 0xFF:
+                    while (ord(b) == 0xFF):
                         b = input.read(1)
-                    if ord(b) >= 0xC0 and ord(b) <= 0xC3:
+                    if (ord(b) >= 0xC0 and ord(b) <= 0xC3):
                         input.read(3)
                         h, w = struct.unpack(">HH", input.read(4))
                         break
@@ -132,7 +139,7 @@ def get_image_metadata(file_path):
                 raise UnknownImageFormat("ValueError" + msg)
             except Exception as e:
                 raise UnknownImageFormat(e.__class__.__name__ + msg)
-        elif size >= 26 and data.startswith(b'BM'):
+        elif (size >= 26) and data.startswith(b'BM'):
             # BMP
             imgtype = 'BMP'
             headersize = struct.unpack("<I", data[14:18])[0]
@@ -146,9 +153,10 @@ def get_image_metadata(file_path):
                 # as h is negative when stored upside down
                 height = abs(int(h))
             else:
-                raise UnknownImageFormat("Unkown DIB header size:" +
-                                         str(headersize))
-        elif size >= 8 and data[:4] in (b"II\052\000", b"MM\000\052"):
+                raise UnknownImageFormat(
+                    "Unkown DIB header size:" +
+                    str(headersize))
+        elif (size >= 8) and data[:4] in (b"II\052\000", b"MM\000\052"):
             # Standard TIFF, big- or little-endian
             # BigTIFF and other different but TIFF-like formats are not
             # supported currently
@@ -169,7 +177,7 @@ def get_image_metadata(file_path):
                 9: (4, boChar + "l"),  # SLONG
                 10: (8, boChar + "ll"),  # SRATIONAL
                 11: (4, boChar + "f"),  # FLOAT
-                12: (8, boChar + "d")  # DOUBLE
+                12: (8, boChar + "d")   # DOUBLE
             }
             ifdOffset = struct.unpack(boChar + "L", data[4:8])[0]
             try:
@@ -185,14 +193,15 @@ def get_image_metadata(file_path):
                     input.seek(entryOffset)
                     tag = input.read(2)
                     tag = struct.unpack(boChar + "H", tag)[0]
-                    if tag == 256 or tag == 257:
+                    if(tag == 256 or tag == 257):
                         # if type indicates that value fits into 4 bytes, value
                         # offset is not an offset but value itself
                         type = input.read(2)
                         type = struct.unpack(boChar + "H", type)[0]
                         if type not in tiffTypes:
-                            raise UnknownImageFormat("Unkown TIFF field type:"
-                                                     + str(type))
+                            raise UnknownImageFormat(
+                                "Unkown TIFF field type:" +
+                                str(type))
                         typeSize = tiffTypes[type][0]
                         typeChar = tiffTypes[type][1]
                         input.seek(entryOffset + 8)
@@ -207,7 +216,7 @@ def get_image_metadata(file_path):
             except Exception as e:
                 raise UnknownImageFormat(str(e))
         elif size >= 2:
-            # see http://en.wikipedia.org/wiki/ICO_(file_format)
+                # see http://en.wikipedia.org/wiki/ICO_(file_format)
             imgtype = 'ICO'
             input.seek(0)
             reserved = input.read(2)
@@ -228,12 +237,11 @@ def get_image_metadata(file_path):
         else:
             raise UnknownImageFormat(FILE_UNKNOWN)
 
-    return Image(
-        path=file_path,
-        type=imgtype,
-        file_size=size,
-        width=width,
-        height=height)
+    return Image(path=file_path,
+                 type=imgtype,
+                 file_size=size,
+                 width=width,
+                 height=height)
 
 
 import unittest
@@ -245,8 +253,7 @@ class Test_get_image_size(unittest.TestCase):
         'width': 251,
         'height': 208,
         'file_size': 22228,
-        'type': 'PNG'
-    }]
+        'type': 'PNG'}]
 
     def setUp(self):
         pass
@@ -275,7 +282,9 @@ class Test_get_image_size(unittest.TestCase):
         img = self.data[0]
         output = get_image_size(img['path'])
         self.assertTrue(output)
-        self.assertEqual(output, (img['width'], img['height']))
+        self.assertEqual(output,
+                         (img['width'],
+                          img['height']))
 
     def tearDown(self):
         pass
@@ -299,24 +308,22 @@ def main(argv=None):
         description="Print metadata for the given image paths "
                     "(without image library bindings).")
 
-    prs.add_option('--json', dest='json', action='store_true')
-    prs.add_option('--json-indent', dest='json_indent', action='store_true')
+    prs.add_option('--json',
+                   dest='json',
+                   action='store_true')
+    prs.add_option('--json-indent',
+                   dest='json_indent',
+                   action='store_true')
 
-    prs.add_option(
-        '-v',
-        '--verbose',
-        dest='verbose',
-        action='store_true', )
-    prs.add_option(
-        '-q',
-        '--quiet',
-        dest='quiet',
-        action='store_true', )
-    prs.add_option(
-        '-t',
-        '--test',
-        dest='run_tests',
-        action='store_true', )
+    prs.add_option('-v', '--verbose',
+                   dest='verbose',
+                   action='store_true',)
+    prs.add_option('-q', '--quiet',
+                   dest='quiet',
+                   action='store_true',)
+    prs.add_option('-t', '--test',
+                   dest='run_tests',
+                   action='store_true',)
 
     argv = list(argv) if argv is not None else sys.argv[1:]
     (opts, args) = prs.parse_args(args=argv)
@@ -368,7 +375,7 @@ def main(argv=None):
             log.exception(e)
             errors.append((path_arg, e))
             pass
-    if errors:
+    if len(errors):
         import pprint
         print("ERRORS", file=sys.stderr)
         print("======", file=sys.stderr)
