@@ -19,3 +19,4 @@ Hover Image Preview v0.1.0
 
 - the "all_formats" settings is removed
 - "formats_to_convert" don't start with dot "." anymore, if you've already overridden the setting you must remove leading dots
+- the "max_dimensions" setting is removed, it was a workaround for large popups, but now popup dimensions are set to 75% of the viewport

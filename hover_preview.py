@@ -19,19 +19,7 @@ from .get_image_size import get_image_size, UnknownImageFormat
 
 
 TEMPLATE = """
-    <a href="resize">
-        <img style="width: %dpx;height: %dpx;" src="data:image/png;base64,%s">
-    </a>
-    <div>%dx%d %s</div>
-    <div>
-        <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
-    </div>
-    """
-
-DATA_URL_TEMPLATE = """
-    <a href="resize">
-        <img style="width: %dpx;height: %dpx;" src="data:image/%s;base64,%s">
-    </a>
+    <img style="width: %dpx;height: %dpx;" src="data:image/%s;base64,%s">
     <div>%dx%d %s</div>
     <div>
         <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
@@ -43,21 +31,15 @@ IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
 
 TEMP_DIR = tempfile.gettempdir()
 
-# popup size flags
-url_popup_is_large = True
-data_url_popup_is_large = True
-file_popup_is_large = True
-
 
 def hover_preview_callback():
     """Get the settings and store them in global variables."""
 
-    global PREVIEW_ON_HOVER, MAX_WIDTH, MAX_HEIGHT, MAX_CHARS, ALL_FORMATS,\
+    global PREVIEW_ON_HOVER, MAX_CHARS, ALL_FORMATS,\
         FORMAT_TO_CONVERT, SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME,\
         IMAGE_URL_RE, IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
 
     PREVIEW_ON_HOVER = settings.get("preview_on_hover", True)
-    MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", (320, 240))
     MAX_CHARS = settings.get("max_chars", 2028) // 2
 
     format_to_convert = settings.get("formats_to_convert",
@@ -131,22 +113,6 @@ def get_dimensions(view: View, path: str):
         height *= ratio
 
     return width, height
-
-
-def fix_oversize(width: int, height: int):
-    """Shrink the popup if its bigger than max_width x max_height."""
-
-    new_width, new_height = width, height
-    if width > MAX_WIDTH or height > MAX_HEIGHT:
-        if width > height:
-            ratio = MAX_WIDTH / width
-            new_width = MAX_WIDTH
-            new_height = height * ratio
-        else:
-            ratio = MAX_HEIGHT / height
-            new_height = MAX_HEIGHT
-            new_width = width * ratio
-    return new_width, new_height
 
 
 def check_recursive(base_folders, name):
@@ -314,21 +280,8 @@ def handle_as_url(view: View, point: int, string: str, name: str):
     size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
-        global url_popup_is_large
 
-        if href == "resize":
-            if url_popup_is_large:
-                url_popup_is_large = False
-                new_width, new_height = fix_oversize(width, height)
-                view.update_popup(TEMPLATE % (new_width, new_height,
-                                              encoded, real_width,
-                                              real_height, size))
-            else:
-                url_popup_is_large = True
-                view.update_popup(TEMPLATE % (width, height, encoded,
-                                              real_width, real_height,
-                                              size))
-        elif href == "save":
+        if href == "save":
             if need_conversion:
                 save(conv_file, conv_name, "url")
             else:
@@ -342,15 +295,12 @@ def handle_as_url(view: View, point: int, string: str, name: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        TEMPLATE % (width, height, encoded, real_width,
-                    real_height, size),
+        TEMPLATE % (width, height, "png", encoded, real_width, real_height, size),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
         on_navigate=on_navigate
     )
-    # the url-based image's popup is too big
-    url_popup_is_large = True
 
 
 def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
@@ -377,24 +327,8 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
     size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
-        global data_url_popup_is_large
 
-        if href == "resize":
-            if data_url_popup_is_large:
-                data_url_popup_is_large = False
-                new_width, new_height = fix_oversize(width, height)
-                view.update_popup(DATA_URL_TEMPLATE % (new_width,
-                                                       new_height, ext,
-                                                       encoded, real_width,
-                                                       real_height,
-                                                       size))
-            else:
-                data_url_popup_is_large = True
-                view.update_popup(DATA_URL_TEMPLATE % (width, height, ext,
-                                                       encoded, real_width,
-                                                       real_height,
-                                                       size))
-        elif href == "save":
+        if href == "save":
             save(tmp_file, name, "data_url")
         elif href == "save_as":
             convert(tmp_file, "data_url", name)
@@ -402,15 +336,12 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        DATA_URL_TEMPLATE % (width, height, ext, encoded, real_width,
-                             real_height, size),
+        TEMPLATE % (width, height, ext, encoded, real_width, real_height, size),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
         on_navigate=on_navigate
     )
-    # the data-url-based image's popup is too big
-    data_url_popup_is_large = True
 
 
 def handle_as_file(view: View, point: int, string: str):
@@ -450,21 +381,8 @@ def handle_as_file(view: View, point: int, string: str):
     size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
-        global file_popup_is_large
 
-        if href == "resize":
-            if file_popup_is_large:
-                file_popup_is_large = False
-                new_width, new_height = fix_oversize(width, height)
-                view.update_popup(TEMPLATE % (new_width, new_height,
-                                              encoded, real_width,
-                                              real_height, size))
-            else:
-                file_popup_is_large = True
-                view.update_popup(TEMPLATE % (width, height, encoded,
-                                              real_width, real_height,
-                                              size))
-        elif href == "save":
+        if href == "save":
             if need_conversion:
                 save(conv_file, conv_name, "file")
             else:
@@ -475,14 +393,12 @@ def handle_as_file(view: View, point: int, string: str):
             sublime.active_window().open_file(file)
 
     view.show_popup(
-        TEMPLATE % (width, height, encoded, real_width,
+        TEMPLATE % (width, height, "png", encoded, real_width,
                     real_height, size),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
         on_navigate=on_navigate)
-    # the file-based image's popup is too big
-    file_popup_is_large = True
 
 
 def preview_image(view: View, point: int):

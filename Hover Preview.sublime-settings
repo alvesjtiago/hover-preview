@@ -5,9 +5,6 @@
     // the maximum number of characters to search in
     "max_chars": 2048,
 
-    // max_width x max_height for wich the popup is considered too big and should be resized
-    "max_dimensions": [320, 240],
-
     // "project": searches for the hovered file name in the project
 
     // "file": joins the file path to the hovered file name and see
