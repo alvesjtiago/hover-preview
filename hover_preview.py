@@ -60,12 +60,10 @@ def hover_preview_callback():
     MAX_WIDTH, MAX_HEIGHT = settings.get("max_dimensions", (320, 240))
     MAX_CHARS = settings.get("max_chars", 2028) // 2
 
-    FORMAT_TO_CONVERT = settings.get("formats_to_convert",
+    format_to_convert = settings.get("formats_to_convert",
                                      ("svg", "svgz", "ico", "webp"))
-    ALL_FORMATS = set(settings.get("simple_formats",
-                                   ("png", "jpg", "jpeg", "bmp", "gif"))
-                      ).union(FORMAT_TO_CONVERT)
-    FORMAT_TO_CONVERT = tuple('.' + ext for ext in FORMAT_TO_CONVERT)
+    ALL_FORMATS = {"png", "jpg", "jpeg", "bmp", "gif"}.union(format_to_convert)
+    FORMAT_TO_CONVERT = tuple('.' + ext for ext in format_to_convert)
 
     IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
 

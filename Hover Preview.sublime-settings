@@ -27,9 +27,6 @@
     // the name of the folder in wich saved images will be stored
     "image_folder_name": "Hovered Images",
 
-    // image formats supported by sublime text popups
-    "simple_formats": ["png", "jpg", "jpeg", "bmp", "gif"],
-
     // images that require conversion before rendering
     "formats_to_convert": ["svg", "svgz", "ico", "webp"],
 }
