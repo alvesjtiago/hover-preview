@@ -21,7 +21,7 @@
     // Note that this setting is only relevant if search_mode is set to "project"
     "recursive": true,
 
-    // the name of the folder in wich saved images will be stored
+    // the name of the folder in which saved images will be stored
     "image_folder_name": "Hovered Images",
 
     // images that require conversion before rendering
