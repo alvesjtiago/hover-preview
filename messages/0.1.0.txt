@@ -9,6 +9,7 @@ Hover Image Preview v0.1.0
 - you can now disable the preview on hover
 - images with size less than 1KB are now expressed in Bytes
 - support for urls with no protocol (e.g www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg)
+- added a settings entry to the Package Settings menu
 
 ## Fixes
 
