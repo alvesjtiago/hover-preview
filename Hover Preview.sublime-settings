@@ -1,6 +1,9 @@
 {
-    // max_width x max_height for wich the popup is considered too big and should be resized
-    "max_dimensions": [320, 240],
+    // preview images on hover
+    "preview_on_hover": true,
+
+    // the maximum number of characters to search in
+    "max_chars": 2048,
 
     // "project": searches for the hovered file name in the project
 
@@ -8,19 +11,19 @@
     // if it makes a valid image path
     "search_mode": "project",
 
-    // the name of the folder in wich saved images will be stored
+    // true:  takes only the name part of the hovered file name and performs
+    // a recursive search in the project (directories and subdirectories)
+
+    // Note that the path part is irrelevant, if you don't like this behavior
+    // you can set this to false and/or set search_mode to "file"
+
+    // false: checks if the hovered file name exists in the base folders of the project (directories only)
+    // Note that this setting is only relevant if search_mode is set to "project"
+    "recursive": true,
+
+    // the name of the folder in which saved images will be stored
     "image_folder_name": "Hovered Images",
 
-    // all image formats to look for
-    "all_formats": ["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"],
-
     // images that require conversion before rendering
-    "formats_to_convert": [".svg", ".svgz", ".webp"],
-
-    // true:  takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories)
-    // Note that the path part is irrelevant, if you don't like this behavior you can set this to false and/or set search_mode to "file"
-
-    // false: sees if the hovered file name exists in the base folders of the project (directories only)
-    // Note that this setting is only relevant if search_mode is set to "project"
-    "recursive": true
+    "formats_to_convert": ["svg", "svgz", "ico", "webp"],
 }

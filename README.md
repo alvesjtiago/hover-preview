@@ -1,8 +1,14 @@
 # Hover Preview
 
-A Sublime Text 3 plugin to preview images simply by hovering on a file name or an image url.
+The Sublime Text 3 image previewing plugin.
 
-![Screenshot of Hover Preview, a plugin for Sublime Text 3 by @alvesjtiago](hover_preview.png)
+![Screenshot of Hover Preview, a plugin for Sublime Text 3 by @alvesjtiago](screenshot.png)
+
+## Usage
+
+- if "preview_on_hover" is set to true (the default), hover over an image filename (full, relative or just the name), a url or a data-url
+- Open the context menu and click on `Preview Image` (it's only visible when on an image identifier)
+- you can bind the "preview_image" command to a key or a mouse gesture (it is not bound by default)
 
 ## Installation
 
@@ -14,53 +20,24 @@ Search for "Hover Image Preview" and install.
 ### Manual
 
 _macOS_
-```
+```sh
 cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages
 git clone --depth=1 https://github.com/alvesjtiago/hover-preview.git
 ```
 
 _Ubuntu_
-```
+```sh
 cd ~/.config/sublime-text-3/Packages
 git clone --depth=1 https://github.com/alvesjtiago/hover-preview.git
 ```
 
 _Windows_
-```
+```sh
 cd "%APPDATA%\Sublime Text 3\Packages"
 git clone --depth=1 https://github.com/alvesjtiago/hover-preview.git
 ```
 
 Or manually create a folder named "hover-preview" on your Packages folder and copy the content of this repo to it.
-
-## Configuration
-
-#### max_dimensions:
-
-- max\_width x max\_height for which the pop-up is considered too big and should be resized, (default: `[320, 240]`).
-
-#### search_mode: 
-
-- `"project" (default):` searches for the hovered file name in the project.
-- `"file":` joins the file path to the hovered file name and see if it makes a valid image path.
-
-#### recursive:
-
-- `true (default)`: takes only the name part of the hovered file name and performs a recursive search in the project (directories and subdirectories).
-- `false`: sees if the hovered file name exists in the base folders of the project (directories only).
-
-#### all_formats:
-
-- all image formats to look for, (default: `["png", "jpg", "jpeg", "bmp", "gif", "ico", "svg", "svgz", "webp"]`).
-
-#### formats\_to\_convert:
-
-- images that require conversion before rendering, (default: `[".svg", ".svgz", ".webp"]`).
-
-**Notes**
-
-- if `"recursive": true` the path part is irrelevant, if you don't like this behavior you can set this to `false` and/or set `"search_mode"` to `"file"`.
-- `"recursive"` is only relevant if `"search_mode"` is set to `"project"`.
 
 ## Requirements
 

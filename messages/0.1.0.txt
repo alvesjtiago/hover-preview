@@ -1,0 +1,23 @@
+
+Hover Image Preview v0.1.0
+===========================
+
+## New Features
+
+- images are detected in any location (not only between "", '' or ()) (#15, #31)
+- you can now preview images with a keybinding, a mousbinding or from the context menu, for more details see the README (#24)
+- you can now disable the preview on hover
+- images with size less than 1KB are now expressed in Bytes
+- support for urls with no protocol (e.g www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg)
+- added a settings entry to the Package Settings menu
+
+## Fixes
+
+- .ico images are not rendered
+- size of 0KB is shown for images with size less than 1KB
+
+## Notes
+
+- the "all_formats" settings is removed
+- "formats_to_convert" don't start with dot "." anymore, if you've already overridden the setting you must remove leading dots
+- the "max_dimensions" setting is removed, it was a workaround for large popups, but now popup dimensions are set to 75% of the viewport

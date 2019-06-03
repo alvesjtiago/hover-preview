@@ -3,4 +3,5 @@ Hover Image Preview v0.0.23
 ===========================
 
 ## Fixes
-    - fixed data urls images duplicate names (myfile.<ext>)
+
+- fixed data urls images duplicate names (myfile.<ext>)

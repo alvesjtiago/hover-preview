@@ -3,11 +3,13 @@ Hover Image Preview v0.0.22
 ===========================
 
 ## New Features
-    - added support for data urls
-    - you can now specify the name of the folder in which the images are saved
+
+- added support for data urls
+- you can now specify the name of the folder in which the images are saved
 
 ## Fixes
-    - when saving an image, the best match is now searched for instead
-    of the first when recursively searching for the file in the project.
-    - fixed folder created before confirming conversion
-    - the size of the popup is proportional to the viewport
+
+- when saving an image, the best match is now searched for instead
+of the first when recursively searching for the file in the project.
+- fixed folder created before confirming conversion
+- the size of the popup is proportional to the viewport
