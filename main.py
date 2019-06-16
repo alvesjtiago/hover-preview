@@ -86,8 +86,14 @@ def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
-def get_dimensions(view: View, path: str):
-    """Return the width and height from the given path."""
+def get_data(view: View, path: str):
+    """
+    Return a tuple of (width, height, real_width, real_height, size).
+
+    `real_width` and `real_height` are the real dimensions of the image file
+    `width` and `height` are adjusted to the viewport
+    `size` is the size of the image file
+    """
 
     # Allow max automatic detection and remove gutter
     max_width, max_height = view.viewport_extent()
@@ -96,22 +102,23 @@ def get_dimensions(view: View, path: str):
     max_ratio = max_height / max_width
 
     # Get image dimensions
+    width, height = -1, -1
     try:
-        width, height, _ = get_image_size(path)
+        real_width, real_height, size = get_image_size(path)
     except UnknownImageFormat:
-        return -1, -1
+        return -1, -1, -1, -1, -1
 
     # First check height since it's the smallest vector
-    if height / width >= max_ratio and height > max_height:
-        ratio = max_height / height
-        width *= ratio
-        height *= ratio
-    elif height / width <= max_ratio and width > max_width:
-        ratio = max_width / width
-        width *= ratio
-        height *= ratio
+    if real_height / real_width >= max_ratio and real_height > max_height:
+        ratio = max_height / real_height
+        width = real_width * ratio
+        height = real_height * ratio
+    elif real_height / real_width <= max_ratio and real_width > max_width:
+        ratio = max_width / real_width
+        width = real_width * ratio
+        height = real_height * ratio
 
-    return width, height
+    return width, height, real_width, real_height, size
 
 
 def check_recursive(base_folders, name):
@@ -273,8 +280,7 @@ def handle_as_url(view: View, point: int, string: str, name: str):
         with open(tmp_file, "rb") as dst:
             content = dst.read()
 
-    real_width, real_height, size = get_image_size(tmp_file)
-    width, height = get_dimensions(view, tmp_file)
+    width, height, real_width, real_height, size = get_data(view, tmp_file)
     encoded = str(base64.b64encode(content), "utf-8")
     size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
@@ -321,8 +327,7 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
     finally:
         dst.close()
 
-    real_width, real_height, size = get_image_size(tmp_file)
-    width, height = get_dimensions(view, tmp_file)
+    width, height, real_width, real_height, size = get_data(view, tmp_file)
     size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
@@ -375,8 +380,7 @@ def handle_as_file(view: View, point: int, string: str):
     with open(file, "rb") as f:
         encoded = str(base64.b64encode(f.read()), "utf-8")
 
-    real_width, real_height, size = get_image_size(file)
-    width, height = get_dimensions(view, file)
+    width, height, real_width, real_height, size = get_data(view, file)
     size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
