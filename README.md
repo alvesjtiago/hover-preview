@@ -1,13 +1,13 @@
 # Image Preview
 
-The Sublime Text 3 image previewing plugin.
+### The Sublime Text 3 image previewing plugin
 
 ![Screenshot of Image Preview, a plugin for Sublime Text 3 by @alvesjtiago](screenshot.png)
 
 ## Usage
 
-- if "preview_on_hover" is set to true (the default), hover over an image filename (full, relative or just the name), a url or a data-url
-- Open the context menu and click on `Preview Image` (it's only visible when on an image identifier)
+- hover over an image filename (full, relative or just the name), a url or a data-url
+- open the context menu and click on `Preview Image` (it's only visible when on an image identifier)
 - you can bind the "preview_image" command to a key or a mouse gesture (it is not bound by default)
 
 ## Installation
