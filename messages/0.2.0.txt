@@ -1,0 +1,17 @@
+
+Image Preview v0.2.0
+===========================
+
+## Breaking Changes
+
+- the plugin was renamed to "Image Preview" (previously "Hover Image Preview")
+- the settings file was renamed accordingly
+
+## Fixes
+
+- [data-]url images on long lines where not previewed (#40)
+
+## Notes
+
+- the "max_chars" settings was removed, it was more trouble than it worth
+- the default value for "image_folder_name" setting is now "Previewed Images" (previously "Hovered Images")
