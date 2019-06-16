@@ -22,7 +22,7 @@
     "recursive": true,
 
     // the name of the folder in which saved images will be stored
-    "image_folder_name": "Hovered Images",
+    "image_folder_name": "Previewed Images",
 
     // images that require conversion before rendering
     "formats_to_convert": ["svg", "svgz", "ico", "webp"],

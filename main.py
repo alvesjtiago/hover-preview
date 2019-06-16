@@ -32,7 +32,7 @@ IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
 TEMP_DIR = tempfile.gettempdir()
 
 
-def hover_preview_callback():
+def image_preview_callback():
     """Get the settings and store them in global variables."""
 
     global PREVIEW_ON_HOVER, MAX_CHARS, ALL_FORMATS,\
@@ -47,7 +47,7 @@ def hover_preview_callback():
     ALL_FORMATS = ["png", "jpg", "jpeg", "bmp", "gif"] + format_to_convert
     FORMAT_TO_CONVERT = tuple('.' + ext for ext in format_to_convert)
 
-    IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Hovered Images")
+    IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Previewed Images")
 
     SEARCH_MODE = settings.get("search_mode", "project")
     RECURSIVE = settings.get("recursive", True)
@@ -75,10 +75,10 @@ def hover_preview_callback():
 def plugin_loaded():
     global settings
 
-    settings = sublime.load_settings("Hover Preview.sublime-settings")
-    settings.clear_on_change("hover_preview")
-    hover_preview_callback()
-    settings.add_on_change("hover_preview", hover_preview_callback)
+    settings = sublime.load_settings("Image Preview.sublime-settings")
+    settings.clear_on_change("image_preview")
+    image_preview_callback()
+    settings.add_on_change("image_preview", image_preview_callback)
 
 
 def magick(inp, out):
