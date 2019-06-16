@@ -27,7 +27,7 @@ TEMPLATE = """
     """
 
 IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
-                               r"([a-zA-Z0-9+/]+={0,2})")
+                               r"([a-zA-Z0-9+/ ]+={0,2})")
 
 TEMP_DIR = tempfile.gettempdir()
 
@@ -35,12 +35,11 @@ TEMP_DIR = tempfile.gettempdir()
 def image_preview_callback():
     """Get the settings and store them in global variables."""
 
-    global PREVIEW_ON_HOVER, MAX_CHARS, ALL_FORMATS,\
-        FORMAT_TO_CONVERT, SEARCH_MODE, RECURSIVE, IMAGE_FOLDER_NAME,\
-        IMAGE_URL_RE, IMAGE_FILE_RE, IMAGE_FILE_NAME_RE
+    global PREVIEW_ON_HOVER, ALL_FORMATS, FORMAT_TO_CONVERT, SEARCH_MODE,\
+        RECURSIVE, IMAGE_FOLDER_NAME, IMAGE_URL_RE, IMAGE_FILE_RE,\
+        IMAGE_FILE_NAME_RE
 
     PREVIEW_ON_HOVER = settings.get("preview_on_hover", True)
-    MAX_CHARS = settings.get("max_chars", 2028) // 2
 
     format_to_convert = settings.get("formats_to_convert",
                                      ["svg", "svgz", "ico", "webp"])
@@ -404,10 +403,7 @@ def handle_as_file(view: View, point: int, string: str):
 def preview_image(view: View, point: int):
     """Find the image path or url and Preview the image if possible."""
 
-    # trim the line if it's longer than "max_chars"
     line = view.line(point)
-    line.a = max(line.a, point - MAX_CHARS)
-    line.b = min(line.b, point + MAX_CHARS)
 
     string = view.substr(line)
     # the offset of point relative to the start of the line
@@ -465,8 +461,6 @@ class PreviewImageCommand(sublime_plugin.TextCommand):
     def is_visible(self, event):
         point = self.view.window_to_text((event['x'], event['y']))
         line = self.view.line(point)
-        line.a = max(line.a, point - MAX_CHARS)
-        line.b = min(line.b, point + MAX_CHARS)
 
         string = self.view.substr(line)
         point -= line.a
