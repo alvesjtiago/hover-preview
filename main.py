@@ -101,8 +101,6 @@ def get_data(view: View, path: str) -> 'Tuple[int, int, int, int, int]':
     max_height *= 0.75
     max_ratio = max_height / max_width
 
-    # Get image dimensions
-    width, height = -1, -1
     try:
         real_width, real_height, size = get_image_size(path)
     except UnknownImageFormat:
@@ -110,13 +108,14 @@ def get_data(view: View, path: str) -> 'Tuple[int, int, int, int, int]':
 
     # First check height since it's the smallest vector
     if real_height / real_width >= max_ratio and real_height > max_height:
-        ratio = max_height / real_height
-        width = real_width * ratio
-        height = real_height * ratio
+        width = real_width * max_height / real_height
+        height = max_height
     elif real_height / real_width <= max_ratio and real_width > max_width:
-        ratio = max_width / real_width
-        width = real_width * ratio
-        height = real_height * ratio
+        width = max_width
+        height = real_height * max_width / real_width
+    else:
+        width = real_width
+        height = real_height
 
     return width, height, real_width, real_height, size
 
