@@ -236,11 +236,11 @@ def handle_as_url(view: View, point: int, string: str, name: str):
     try:
         try:
             f = urlopen(unquote(string))  # <==
-        except:
+        except Exception:
             try:
                 url_path = quote(string).replace("%3A", ':', 1)
                 f = urlopen(url_path)
-            except:
+            except Exception:
                 f = urlopen(string)
     # don't fill the console with stack-trace when there`s no connection !!
     except Exception as e:
@@ -282,7 +282,6 @@ def handle_as_url(view: View, point: int, string: str, name: str):
 
     width, height, real_width, real_height, size = get_data(view, tmp_file)
     encoded = str(base64.b64encode(content), "utf-8")
-    size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
 
@@ -300,8 +299,8 @@ def handle_as_url(view: View, point: int, string: str, name: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        TEMPLATE % (width, height, "png", encoded,
-                    real_width, real_height, size),
+        TEMPLATE % (width, height, "png", encoded, real_width, real_height,
+                    str(size // 1024)+"KB" if size >= 1024 else str(size)+'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -329,7 +328,6 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
         dst.close()
 
     width, height, real_width, real_height, size = get_data(view, tmp_file)
-    size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
 
@@ -341,8 +339,8 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        TEMPLATE % (width, height, ext, encoded,
-                    real_width, real_height, size),
+        TEMPLATE % (width, height, ext, encoded, real_width, real_height,
+                    str(size // 1024)+"KB" if size >= 1024 else str(size)+'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -383,7 +381,6 @@ def handle_as_file(view: View, point: int, string: str):
         encoded = str(base64.b64encode(f.read()), "utf-8")
 
     width, height, real_width, real_height, size = get_data(view, file)
-    size = str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'
 
     def on_navigate(href):
 
@@ -398,8 +395,8 @@ def handle_as_file(view: View, point: int, string: str):
             sublime.active_window().open_file(file)
 
     view.show_popup(
-        TEMPLATE % (width, height, "png", encoded, real_width,
-                    real_height, size),
+        TEMPLATE % (width, height, "png", encoded, real_width, real_height,
+                    str(size // 1024)+"KB" if size >= 1024 else str(size)+'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
