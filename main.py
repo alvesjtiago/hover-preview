@@ -10,12 +10,13 @@ import tempfile
 from urllib.parse import quote, unquote
 from urllib.request import urlopen
 
-import sublime
-import sublime_plugin
+import sublime  # type: ignore
+import sublime_plugin  # type: ignore
 
 from sublime import View
 
-from .utils.get_image_size import get_image_size, UnknownImageFormat
+from .utils.get_image_size import get_image_size, UnknownImageFormat  # type: ignore
+from .utils.settings import Settings  # type: ignore
 
 
 TEMPLATE = """
@@ -25,59 +26,52 @@ TEMPLATE = """
         <a href="open">Open</a> | <a href="save">Save</a> | <a href="save_as">Save as</a>
     </div>
     """
-
+TEMP_DIR = tempfile.gettempdir()
 IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
                                r"([a-zA-Z0-9+/ ]+={0,2})")
+image_url_re = re.compile("")
+image_file_re = re.compile("")
+image_file_name_re = re.compile("")
+all_formats = None  # type: ignore
+format_to_convert = None  # type: ignore
 
-TEMP_DIR = tempfile.gettempdir()
 
+def on_change(s):
+    global all_formats,\
+        format_to_convert,\
+        image_url_re,\
+        image_file_re,\
+        image_file_name_re
 
-def image_preview_callback():
-    """Get the settings and store them in global variables."""
-
-    global PREVIEW_ON_HOVER, ALL_FORMATS, FORMAT_TO_CONVERT, SEARCH_MODE,\
-        RECURSIVE, IMAGE_FOLDER_NAME, IMAGE_URL_RE, IMAGE_FILE_RE,\
-        IMAGE_FILE_NAME_RE
-
-    PREVIEW_ON_HOVER = settings.get("preview_on_hover", True)
-
-    format_to_convert = settings.get("formats_to_convert",
-                                     ["svg", "svgz", "ico", "webp"])
-    ALL_FORMATS = ["png", "jpg", "jpeg", "bmp", "gif"] + format_to_convert
-    FORMAT_TO_CONVERT = tuple('.' + ext for ext in format_to_convert)
-
-    IMAGE_FOLDER_NAME = settings.get("image_folder_name", "Previewed Images")
-
-    SEARCH_MODE = settings.get("search_mode", "project")
-    RECURSIVE = settings.get("recursive", True)
-
-    formats_ored = '|'.join(ALL_FORMATS)
-    IMAGE_URL_RE = re.compile(r"(?:(https?)://)?"                       # http(s)://
+    Settings.update(s)
+    all_formats = ["png", "jpg", "jpeg", "bmp", "gif"] + Settings.formats_to_convert
+    format_to_convert = tuple('.' + ext for ext in Settings.formats_to_convert)
+    formats_ored = '|'.join(all_formats)
+    image_url_re = re.compile(r"(?:(https?)://)?"                  # http(s)://
                               r"(?:[^./\"'\s]+\.){1,3}[^/\"'.\s]+/"     # host
                               r"(?:[^/\"'\s]+/)*"                       # path
                               r"([^\"'/\s]+?\.(?:%s))" % formats_ored)  # name
 
-    IMAGE_FILE_RE = re.compile(r"(?:"                 # drive
-                                    r"\w:\\|"         # Windows (e.g C:\)
-                                    r"\\\\|"          # Linux (\\)
-                                    r"\.{0,2}[\\/]"   # Mac OS and/or relative
+    image_file_re = re.compile(r"(?:"            # drive
+                               r"\w:\\|"         # Windows (e.g C:\)
+                               r"\\\\|"          # Linux (\\)
+                               r"\.{0,2}[\\/]"   # Mac OS and/or relative
                                r")"
-                               r"(?:[-.@\w]+?[\\/])*"     # body
-                               r"[-.@\w]+?"               # name
-                               r"\.(?:%s)" % formats_ored   # extension
+                               r"(?:[-.@\w]+?[\\/])*"      # body
+                               r"[-.@\w]+?"                # name
+                               r"\.(?:%s)" % formats_ored  # extension
                                )
-    IMAGE_FILE_NAME_RE = re.compile(r"[-.@\w]+"               # name
+    image_file_name_re = re.compile(r"[-.@\w]+"                 # name
                                     r"\.(?:%s)" % formats_ored  # extension
                                     )
 
 
 def plugin_loaded():
-    global settings
-
-    settings = sublime.load_settings("Image Preview.sublime-settings")
-    settings.clear_on_change("image_preview")
-    image_preview_callback()
-    settings.add_on_change("image_preview", image_preview_callback)
+    loaded_settings = sublime.load_settings("Image Preview.sublime-settings")
+    loaded_settings.clear_on_change("image_preview")
+    on_change(loaded_settings)
+    loaded_settings.add_on_change(
+        "image_preview", lambda ls=loaded_settings: on_change(ls))
 
 
 def magick(inp, out):
@@ -145,11 +139,11 @@ def get_file(view: View, string: str, name: str):
         return string, None
 
     # if search_mode: "project", search only in project
-    elif SEARCH_MODE == "project":
+    elif Settings.search_mode == "project":
         # Get base project folders
         base_folders = sublime.active_window().folders()
         # if "recursive": true, recursively search for the name
-        if RECURSIVE:
+        if Settings.recursive:
             ch_rec = check_recursive(base_folders, name)
             if ch_rec:
                 base_folder, root = ch_rec
@@ -173,7 +167,7 @@ def save(file: str, name: str, kind: str, folder=None, convert=False):
     # all folders in the project
     base_folders = sublime.active_window().folders()
     # create the image folder in the first folder
-    image_folder = osp.join(base_folders[0], IMAGE_FOLDER_NAME)
+    image_folder = osp.join(base_folders[0], Settings.image_folder_name)
     # exact or converted copy of the image
     copy = osp.join(image_folder, name)
     # a relative version of the image_folder for display in the status message
@@ -214,7 +208,7 @@ def convert(file: str, kind: str, name=None):
     """Convert the image to the format chosen from the quick panel and save it."""
 
     basename, ext = osp.splitext(name or osp.basename(file))
-    all_formats = ALL_FORMATS.copy()
+    all_formats = Settings.all_formats.copy()
     # remove the extension of the file
     all_formats.remove(ext[1:])
 
@@ -248,7 +242,7 @@ def handle_as_url(view: View, point: int, string: str, name: str):
         return
 
     # file needs conversion ?
-    need_conversion = name.endswith(FORMAT_TO_CONVERT)  # => True
+    need_conversion = name.endswith(format_to_convert)  # => True
     basename, ext = osp.splitext(name)  # => ("Example", ".svg")
     # create a temporary file
     tmp_file = osp.join(TEMP_DIR,
@@ -300,7 +294,8 @@ def handle_as_url(view: View, point: int, string: str, name: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        TEMPLATE % (width, height, "png", encoded, real_width, real_height, size),
+        TEMPLATE % (width, height, "png", encoded,
+                    real_width, real_height, size),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -340,7 +335,8 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        TEMPLATE % (width, height, ext, encoded, real_width, real_height, size),
+        TEMPLATE % (width, height, ext, encoded,
+                    real_width, real_height, size),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -360,7 +356,7 @@ def handle_as_file(view: View, point: int, string: str):
         return
 
     # does the file need conversion ?
-    need_conversion = file.endswith(FORMAT_TO_CONVERT)
+    need_conversion = file.endswith(format_to_convert)
 
     # if the file needs conversion, convert it and read data from the resulting png
     if need_conversion:
@@ -416,7 +412,7 @@ def preview_image(view: View, point: int):
     # search for the match in the string that contains the point
 
     # ==================URL=====================
-    for match in IMAGE_URL_RE.finditer(string):
+    for match in image_url_re.finditer(string):
         if match.start() <= offset_point <= match.end():
             string, protocol, name = match.group(0, 1, 2)
             # if the url doesn't start with http or https try adding it
@@ -434,12 +430,12 @@ def preview_image(view: View, point: int):
 
     # =================FILE=====================
     # find full and relative paths (e.g ./screenshot.png)
-    for match in IMAGE_FILE_RE.finditer(string):
+    for match in image_file_re.finditer(string):
         if match.start() <= offset_point <= match.end():
             return handle_as_file(view, point, match.group(0))
 
     # find file name (e.g screenshot.png)
-    for match in IMAGE_FILE_NAME_RE.finditer(string):
+    for match in image_file_name_re.finditer(string):
         if match.start() <= offset_point <= match.end():
             return handle_as_file(view, point, match.group(0))
 
@@ -448,7 +444,7 @@ class HoverPreviewImage(sublime_plugin.EventListener):
 
     def on_hover(self, view: View, point: int, hover_zone: int):
 
-        if not PREVIEW_ON_HOVER or hover_zone != sublime.HOVER_TEXT:
+        if not Settings.preview_on_hover or hover_zone != sublime.HOVER_TEXT:
             return
 
         preview_image(view, point)
@@ -458,7 +454,8 @@ class PreviewImageCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, event=None):
         if event:
-            preview_image(self.view, self.view.window_to_text((event['x'], event['y'])))
+            preview_image(self.view, self.view.window_to_text(
+                (event['x'], event['y'])))
         else:
             preview_image(self.view, self.view.selection[0].a)
 
@@ -469,8 +466,8 @@ class PreviewImageCommand(sublime_plugin.TextCommand):
         string = self.view.substr(line)
         point -= line.a
 
-        for pattern in (IMAGE_URL_RE, IMAGE_DATA_URL_RE,
-                        IMAGE_FILE_RE, IMAGE_FILE_NAME_RE):
+        for pattern in (image_url_re, IMAGE_DATA_URL_RE,
+                        image_file_re, image_file_name_re):
             for match in pattern.finditer(string):
                 if match.start() <= point <= match.end():
                     return True
