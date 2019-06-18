@@ -9,6 +9,11 @@ import tempfile
 
 from urllib.parse import quote, unquote
 from urllib.request import urlopen
+try:
+    from typing import List, Optional, Tuple
+    assert List and Optional and Tuple
+except ImportError:
+    pass
 
 import sublime  # type: ignore
 import sublime_plugin  # type: ignore
@@ -32,8 +37,8 @@ IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
 image_url_re = re.compile("")
 image_file_re = re.compile("")
 image_file_name_re = re.compile("")
-all_formats = None  # type: ignore
-format_to_convert = None  # type: ignore
+all_formats = []  # type: List[str]
+format_to_convert = ()  # type: Tuple[str, ...]
 
 
 def on_change(s):
@@ -44,7 +49,8 @@ def on_change(s):
         image_file_name_re
 
     Settings.update(s)
-    all_formats = ["png", "jpg", "jpeg", "bmp", "gif"] + Settings.formats_to_convert
+    all_formats = ["png", "jpg", "jpeg", "bmp",
+                   "gif"] + Settings.formats_to_convert
     format_to_convert = tuple('.' + ext for ext in Settings.formats_to_convert)
     formats_ored = '|'.join(all_formats)
     image_url_re = re.compile(r"(?:(https?)://)?"                  # http(s)://
@@ -80,7 +86,7 @@ def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
-def get_data(view: View, path: str):
+def get_data(view: View, path: str) -> 'Tuple[int, int, int, int, int]':
     """
     Return a tuple of (width, height, real_width, real_height, size).
 
@@ -115,7 +121,7 @@ def get_data(view: View, path: str):
     return width, height, real_width, real_height, size
 
 
-def check_recursive(base_folders, name):
+def check_recursive(base_folders, name) -> 'Optional[Tuple[str, str]]':
     """
     Return the path to the base folder and the path to the file if it is
     present in the project.
@@ -126,9 +132,10 @@ def check_recursive(base_folders, name):
             for f in files:
                 if f == name:
                     return osp.dirname(base_folder), root
+    return None
 
 
-def get_file(view: View, string: str, name: str):
+def get_file(view: View, string: str, name: str) -> 'Tuple[str, Optional[str]]':
     """
     Try to get a file from the given `string` and test whether it's in the
     project directory.
