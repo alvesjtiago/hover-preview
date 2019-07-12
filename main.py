@@ -32,8 +32,7 @@ TEMPLATE = """
     </div>
     """
 TEMP_DIR = tempfile.gettempdir()
-IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,"
-                               r"([a-zA-Z0-9+/ ]+={0,2})")
+IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/ ]+={0,2})")
 image_url_re = re.compile("")
 image_file_re = re.compile("")
 image_file_name_re = re.compile("")
@@ -49,26 +48,25 @@ def on_change(s):
         image_file_name_re
 
     Settings.update(s)
-    all_formats = ["png", "jpg", "jpeg", "bmp",
-                   "gif"] + Settings.formats_to_convert
+    all_formats = ["png", "jpg", "jpeg", "bmp", "gif"] + Settings.formats_to_convert
     format_to_convert = tuple('.' + ext for ext in Settings.formats_to_convert)
     formats_ored = '|'.join(all_formats)
-    image_url_re = re.compile(r"(?:(https?)://)?"                  # http(s)://
+    image_url_re = re.compile(r"(?:(https?)://)?"                       # http(s)://
                               r"(?:[^./\"'\s]+\.){1,3}[^/\"'.\s]+/"     # host
                               r"(?:[^/\"'\s]+/)*"                       # path
                               r"([^\"'/\s]+?\.(?:%s))" % formats_ored)  # name
 
-    image_file_re = re.compile(r"(?:"            # drive
-                               r"\w:\\|"         # Windows (e.g C:\)
-                               r"\\\\|"          # Linux (\\)
-                               r"\.{0,2}[\\/]"   # Mac OS and/or relative
+    image_file_re = re.compile(r"(?:"                                   # drive
+                               r"\w:\\|"                                # Windows (e.g C:\)
+                               r"\\\\|"                                 # Linux (\\)
+                               r"\.{0,2}[\\/]"                          # Mac OS and/or relative
                                r")"
-                               r"(?:[-.@\w]+?[\\/])*"      # body
-                               r"[-.@\w]+?"                # name
-                               r"\.(?:%s)" % formats_ored  # extension
+                               r"(?:[-.@\w]+?[\\/])*"                   # body
+                               r"[-.@\w]+?"                             # name
+                               r"\.(?:%s)" % formats_ored               # extension
                                )
-    image_file_name_re = re.compile(r"[-.@\w]+"                 # name
-                                    r"\.(?:%s)" % formats_ored  # extension
+    image_file_name_re = re.compile(r"[-.@\w]+"                         # name
+                                    r"\.(?:%s)" % formats_ored          # extension
                                     )
 
 
@@ -76,8 +74,7 @@ def plugin_loaded():
     loaded_settings = sublime.load_settings("Image Preview.sublime-settings")
     loaded_settings.clear_on_change("image_preview")
     on_change(loaded_settings)
-    loaded_settings.add_on_change(
-        "image_preview", lambda ls=loaded_settings: on_change(ls))
+    loaded_settings.add_on_change("image_preview", lambda ls=loaded_settings: on_change(ls))
 
 
 def magick(inp, out):
@@ -177,24 +174,20 @@ def save(file: str, name: str, kind: str, folder=None, convert=False):
     # exact or converted copy of the image
     copy = osp.join(image_folder, name)
     # a relative version of the image_folder for display in the status message
-    image_folder_rel = osp.relpath(
-        image_folder, osp.dirname(base_folders[0]))
+    image_folder_rel = osp.relpath(image_folder, osp.dirname(base_folders[0]))
 
     if osp.exists(copy):
-        sublime.status_message("%s is already in %s" %
-                               (name, image_folder_rel))
+        sublime.status_message("%s is already in %s" % (name, image_folder_rel))
         return
 
     if kind == "file" and folder:
-        sublime.status_message("%s is already in %s" %
-                               (name, osp.relpath(osp.dirname(file), folder)))
+        sublime.status_message("%s is already in %s" % (name, osp.relpath(osp.dirname(file), folder)))
         return
 
     ch_rec = check_recursive(base_folders, name)
     if ch_rec:
         folder, root = ch_rec
-        sublime.status_message("%s is already in %s" %
-                               (name, osp.relpath(root, folder)))
+        sublime.status_message("%s is already in %s" % (name, osp.relpath(root, folder)))
         return
 
     if not osp.exists(image_folder):
@@ -251,9 +244,7 @@ def handle_as_url(view: View, point: int, string: str, name: str):
     need_conversion = name.endswith(format_to_convert)  # => True
     basename, ext = osp.splitext(name)  # => ("Example", ".svg")
     # create a temporary file
-    tmp_file = osp.join(TEMP_DIR,
-                        "tmp_image" + (ext if need_conversion else ".png")
-                        )  # => "TEMP_DIR/tmp_image.svg"
+    tmp_file = osp.join(TEMP_DIR, "tmp_image" + (ext if need_conversion else ".png"))  # => "TEMP_DIR/tmp_image.svg"
 
     # Save downloaded data in the temporary file
     content = f.read()
@@ -300,7 +291,7 @@ def handle_as_url(view: View, point: int, string: str, name: str):
 
     view.show_popup(
         TEMPLATE % (width, height, "png", encoded, real_width, real_height,
-                    str(size // 1024)+"KB" if size >= 1024 else str(size)+'B'),
+                    str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -313,8 +304,7 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
 
     # create a temporary file
     tmp_file = osp.join(TEMP_DIR, "tmp_data_image." + ext)
-    file_hash = int(hashlib.sha1(encoded.encode('utf-8')
-                                 ).hexdigest(), 16) % (10 ** 8)
+    file_hash = int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
     name = str(file_hash) + "." + ext
 
     # Save downloaded data in the temporary file
@@ -340,7 +330,7 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
 
     view.show_popup(
         TEMPLATE % (width, height, ext, encoded, real_width, real_height,
-                    str(size // 1024)+"KB" if size >= 1024 else str(size)+'B'),
+                    str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -350,7 +340,6 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
 
 def handle_as_file(view: View, point: int, string: str):
     """Handle the given `string` as a file."""
-    # "screenshot.png"
 
     name = osp.basename(string)
     file, folder = get_file(view, string, name)
@@ -396,7 +385,7 @@ def handle_as_file(view: View, point: int, string: str):
 
     view.show_popup(
         TEMPLATE % (width, height, "png", encoded, real_width, real_height,
-                    str(size // 1024)+"KB" if size >= 1024 else str(size)+'B'),
+                    str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
         *view.viewport_extent(),
@@ -423,8 +412,7 @@ def preview_image(view: View, point: int):
             if not protocol:
                 string = "http://" + string
             # don't block ST while handling the url
-            return sublime.set_timeout_async(lambda: handle_as_url(
-                view, point, string, name), 0)
+            return sublime.set_timeout_async(lambda: handle_as_url(view, point, string, name), 0)
 
     # =================DATA URL=================
     for match in IMAGE_DATA_URL_RE.finditer(string):
@@ -457,8 +445,7 @@ class PreviewImageCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, event=None):
         if event:
-            preview_image(self.view, self.view.window_to_text(
-                (event['x'], event['y'])))
+            preview_image(self.view, self.view.window_to_text((event['x'], event['y'])))
         else:
             preview_image(self.view, self.view.selection[0].a)
 
@@ -469,8 +456,7 @@ class PreviewImageCommand(sublime_plugin.TextCommand):
         string = self.view.substr(line)
         point -= line.a
 
-        for pattern in (image_url_re, IMAGE_DATA_URL_RE,
-                        image_file_re, image_file_name_re):
+        for pattern in (image_url_re, IMAGE_DATA_URL_RE, image_file_re, image_file_name_re):
             for match in pattern.finditer(string):
                 if match.start() <= point <= match.end():
                     return True

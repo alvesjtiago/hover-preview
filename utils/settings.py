@@ -15,8 +15,5 @@ class Settings:
         cls.preview_on_hover = loaded_settings.get("preview_on_hover", True)
         cls.search_mode = loaded_settings.get("search_mode", "project")
         cls.recursive = loaded_settings.get("recursive", True)
-        cls.image_folder_name = loaded_settings.get("image_folder_name",
-                                                    "Previewed Images")
-        cls.formats_to_convert = loaded_settings.get("formats_to_convert",
-                                                     ["svg", "svgz", "ico",
-                                                      "webp"])
+        cls.image_folder_name = loaded_settings.get("image_folder_name", "Previewed Images")
+        cls.formats_to_convert = loaded_settings.get("formats_to_convert", ["svg", "svgz", "ico", "webp"])
