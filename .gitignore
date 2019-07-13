@@ -1,3 +1,4 @@
 .mypy_cache/
 mypy.ini
 *.sublime-workspace
+Previewed Images/
