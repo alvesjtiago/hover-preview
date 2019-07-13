@@ -205,15 +205,15 @@ def convert(file: str, kind: str, name=None):
     """Convert the image to the format chosen from the quick panel and save it."""
 
     basename, ext = osp.splitext(name or osp.basename(file))
-    all_formats = Settings.all_formats.copy()
     # remove the extension of the file
-    all_formats.remove(ext[1:])
+    other_formats = all_formats.copy()
+    other_formats.remove(ext[1:])
 
     def on_done(i):
         if i != -1:
-            save(file, basename + '.' + all_formats[i], kind, convert=True)
+            save(file, basename + '.' + other_formats[i], kind, convert=True)
 
-    sublime.active_window().show_quick_panel(all_formats, on_done)
+    sublime.active_window().show_quick_panel(other_formats, on_done)
 
 
 def handle_as_url(view: sublime.View, point: int, string: str, name: str):
