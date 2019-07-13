@@ -18,8 +18,6 @@ except ImportError:
 import sublime  # type: ignore
 import sublime_plugin  # type: ignore
 
-from sublime import View
-
 from .utils.get_image_size import get_image_size, UnknownImageFormat  # type: ignore
 from .utils.settings import Settings  # type: ignore
 
@@ -83,7 +81,7 @@ def magick(inp, out):
     subprocess.call(["magick", inp, out], shell=os.name == "nt")
 
 
-def get_data(view: View, path: str) -> 'Tuple[int, int, int, int, int]':
+def get_data(view: sublime.View, path: str) -> 'Tuple[int, int, int, int, int]':
     """
     Return a tuple of (width, height, real_width, real_height, size).
 
@@ -131,7 +129,7 @@ def check_recursive(base_folders, name) -> 'Optional[Tuple[str, str]]':
     return None
 
 
-def get_file(view: View, string: str, name: str) -> 'Tuple[str, Optional[str]]':
+def get_file(view: sublime.View, string: str, name: str) -> 'Tuple[str, Optional[str]]':
     """
     Try to get a file from the given `string` and test whether it's in the
     project directory.
@@ -218,7 +216,7 @@ def convert(file: str, kind: str, name=None):
     sublime.active_window().show_quick_panel(all_formats, on_done)
 
 
-def handle_as_url(view: View, point: int, string: str, name: str):
+def handle_as_url(view: sublime.View, point: int, string: str, name: str):
     """Handle the given `string` as a url."""
 
     # Let's assume this url as input:
@@ -299,7 +297,7 @@ def handle_as_url(view: View, point: int, string: str, name: str):
     )
 
 
-def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
+def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
     """Handle the string as a data url."""
 
     # create a temporary file
@@ -338,7 +336,7 @@ def handle_as_data_url(view: View, point: int, ext: str, encoded: str):
     )
 
 
-def handle_as_file(view: View, point: int, string: str):
+def handle_as_file(view: sublime.View, point: int, string: str):
     """Handle the given `string` as a file."""
 
     name = osp.basename(string)
@@ -392,7 +390,7 @@ def handle_as_file(view: View, point: int, string: str):
         on_navigate=on_navigate)
 
 
-def preview_image(view: View, point: int):
+def preview_image(view: sublime.View, point: int):
     """Find the image path or url and Preview the image if possible."""
 
     line = view.line(point)
@@ -433,7 +431,7 @@ def preview_image(view: View, point: int):
 
 class HoverPreviewImage(sublime_plugin.EventListener):
 
-    def on_hover(self, view: View, point: int, hover_zone: int):
+    def on_hover(self, view: sublime.View, point: int, hover_zone: int):
 
         if not Settings.preview_on_hover or hover_zone != sublime.HOVER_TEXT:
             return
