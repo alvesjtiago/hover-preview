@@ -95,7 +95,7 @@ def get_data(view: sublime.View, path: str) -> 'Tuple[int, int, int, int, int]':
     `size` is the size of the image file
     """
 
-    # Allow max automatic detection and remove gutter
+    # set max dimensions to 75% of the viewport
     max_width, max_height = view.viewport_extent()
     max_width *= 0.75
     max_height *= 0.75
@@ -443,23 +443,28 @@ def preview_image(view: sublime.View, point: int):
             # "www.gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg"
             if not protocol:
                 string = "http://" + string
+            # print("[Image Preview] URL:", match.group(0, 1, 2))
+
             # don't block ST while handling the url
             return sublime.set_timeout_async(lambda: handle_as_url(view, point, string, name), 0)
 
     # =================DATA URL=================
     for match in IMAGE_DATA_URL_RE.finditer(string):
         if match.start() <= offset_point <= match.end():
+            # print("[Image Preview] data URL:", match.groups())
             return handle_as_data_url(view, point, *match.groups())
 
     # =================FILE=====================
     # find full and relative paths (e.g ./screenshot.png)
     for match in image_file_re.finditer(string):
         if match.start() <= offset_point <= match.end():
+            # print("[Image Preview] file:", match.group(0))
             return handle_as_file(view, point, match.group(0))
 
     # find file name (e.g screenshot.png)
     for match in image_file_name_re.finditer(string):
         if match.start() <= offset_point <= match.end():
+            # print("[Image Preview] filename:", match.group(0))
             return handle_as_file(view, point, match.group(0))
 
 
