@@ -22,5 +22,6 @@
     "image_folder_name": "Previewed Images",
 
     // images that require conversion before rendering
+    // Sublime Text's popups supported image formats ("png", "jpg", "jpeg", "bmp" and "gif") will be filtered out
     "formats_to_convert": ["svg", "svgz", "ico", "webp"],
 }

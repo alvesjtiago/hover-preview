@@ -35,19 +35,24 @@ image_url_re = re.compile("")
 image_file_re = re.compile("")
 image_file_name_re = re.compile("")
 all_formats = []  # type: List[str]
-format_to_convert = ()  # type: Tuple[str, ...]
+formats_to_convert = ()  # type: Tuple[str, ...]
 
 
 def on_change(s):
     global all_formats,\
-        format_to_convert,\
+        formats_to_convert,\
         image_url_re,\
         image_file_re,\
         image_file_name_re
 
     Settings.update(s)
-    all_formats = ["png", "jpg", "jpeg", "bmp", "gif"] + Settings.formats_to_convert
-    format_to_convert = tuple('.' + ext for ext in Settings.formats_to_convert)
+    # ST popups supported formats
+    ST_FORMATS = {"png", "jpg", "jpeg", "bmp", "gif"}
+    unique_formats_to_convert = set(Settings.formats_to_convert)
+    all_formats = list(ST_FORMATS.union(unique_formats_to_convert))
+    # filter ou ST supported formats
+    formats_to_convert = tuple('.' + ext for ext in unique_formats_to_convert - ST_FORMATS)
+    # print("[Image Preview]", all_formats, formats_to_convert, unique_formats_to_convert)
     formats_ored = '|'.join(all_formats)
     image_url_re = re.compile(r"(?:(https?)://)?"                       # http(s)://
                               r"(?:[^./\"'\s]+\.){1,3}[^/\"'.\s]+/"     # host
@@ -239,10 +244,10 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
         return
 
     # file needs conversion ?
-    need_conversion = name.endswith(format_to_convert)  # => True
+    need_conversion = name.endswith(formats_to_convert)  # => True
     basename, ext = osp.splitext(name)  # => ("Example", ".svg")
     # create a temporary file
-    tmp_file = osp.join(TEMP_DIR, "tmp_image" + (ext if need_conversion else ".png"))  # => "TEMP_DIR/tmp_image.svg"
+    tmp_file = osp.join(TEMP_DIR, "tmp_image" + ext)  # => "TEMP_DIR/tmp_image.svg"
 
     # Save downloaded data in the temporary file
     content = f.read()
@@ -288,7 +293,7 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
             sublime.active_window().open_file(tmp_file)
 
     view.show_popup(
-        TEMPLATE % (width, height, "png", encoded, real_width, real_height,
+        TEMPLATE % (width, height, ext, encoded, real_width, real_height,
                     str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
@@ -347,10 +352,12 @@ def handle_as_file(view: sublime.View, point: int, string: str):
         return
 
     # does the file need conversion ?
-    need_conversion = file.endswith(format_to_convert)
+    need_conversion = file.endswith(formats_to_convert)
+    ext = name.rsplit('.', 1)[1]
 
     # if the file needs conversion, convert it and read data from the resulting png
     if need_conversion:
+        ext = ".png"
         # keep the image's file and name for later use
         conv_file = file
         conv_name = name
@@ -382,7 +389,7 @@ def handle_as_file(view: sublime.View, point: int, string: str):
             sublime.active_window().open_file(file)
 
     view.show_popup(
-        TEMPLATE % (width, height, "png", encoded, real_width, real_height,
+        TEMPLATE % (width, height, ext, encoded, real_width, real_height,
                     str(size // 1024) + "KB" if size >= 1024 else str(size) + 'B'),
         sublime.HIDE_ON_MOUSE_MOVE_AWAY,
         point,
