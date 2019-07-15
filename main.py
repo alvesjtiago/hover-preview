@@ -256,9 +256,9 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
 
     # if the file needs conversion, convert it then read data from the resulting png
     if need_conversion:
+        ext = ".png"
         # keep the image's temporary file and name for later use
         conv_file = tmp_file  # => "TEMP_DIR/tmp_image.svg"
-        conv_name = name  # => "Example.svg"
 
         # => "TEMP_DIR/tmp_image.png"
         png = osp.splitext(tmp_file)[0] + ".png"
@@ -268,7 +268,6 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
 
         # set temp_file and name to the png file
         tmp_file = png  # => "TEMP_DIR/tmp_image.png"
-        name = basename + ".png"  # => "Example.png"
 
         # read data from the resulting png
         with open(tmp_file, "rb") as dst:
@@ -281,12 +280,12 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
 
         if href == "save":
             if need_conversion:
-                save(conv_file, conv_name, "url")
+                save(conv_file, name, "url")
             else:
                 save(tmp_file, name, "url")
         elif href == "save_as":
             if need_conversion:
-                convert(conv_file, "url", conv_name)
+                convert(conv_file, "url", name)
             else:
                 convert(tmp_file, "url", name)
         else:
@@ -330,7 +329,6 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
         ext = ".png"
 
         conv_file = tmp_file
-        conv_name = name
 
         png = osp.splitext(tmp_file)[0] + ".png"
 
@@ -347,12 +345,12 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
 
         if href == "save":
             if need_conversion:
-                save(conv_file, conv_name, "data_url")
+                save(conv_file, name, "data_url")
             else:
                 save(tmp_file, name, "data_url")
         elif href == "save_as":
             if need_conversion:
-                convert(conv_file, "dat_url", conv_name)
+                convert(conv_file, "dat_url", name)
             else:
                 convert(tmp_file, "data_url", name)
         else:
@@ -387,11 +385,9 @@ def handle_as_file(view: sublime.View, point: int, string: str):
         ext = ".png"
         # keep the image's file and name for later use
         conv_file = file
-        conv_name = name
 
         # create a temporary file
         tmp_file = osp.join(TEMP_DIR, "tmp_png.png")
-        name = osp.splitext(name)[0] + ".png"
 
         # use the magick command of Imagemagick to convert the image to png
         magick(file, tmp_file)
@@ -407,7 +403,7 @@ def handle_as_file(view: sublime.View, point: int, string: str):
 
         if href == "save":
             if need_conversion:
-                save(conv_file, conv_name, "file")
+                save(conv_file, name, "file")
             else:
                 save(file, name, "file", folder)
         elif href == "save_as":
