@@ -7,9 +7,13 @@ Image Preview v0.2.0
 - the plugin was renamed to "Image Preview" (previously "Hover Image Preview")
 - the settings file was renamed accordingly
 
+## New Features
+
+- added support for SVG data URLs (#29)
+
 ## Fixes
 
-- [data-]url images on long lines where not previewed (#40)
+- [data-]URL images on long lines where not previewed (#40)
 
 ## Notes
 

@@ -30,7 +30,7 @@ TEMPLATE = """
     </div>
     """
 TEMP_DIR = tempfile.gettempdir()
-IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp);base64,([a-zA-Z0-9+/ ]+={0,2})")
+IMAGE_DATA_URL_RE = re.compile(r"data:image/(jpeg|png|gif|bmp|svg\+xml);base64,([a-zA-Z0-9+/ ]+={0,2})")
 image_url_re = re.compile("")
 image_file_re = re.compile("")
 image_file_name_re = re.compile("")
@@ -305,10 +305,16 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
 def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
     """Handle the string as a data url."""
 
-    # create a temporary file
+    need_conversion = False
+    # TODO: is this the only case ?
+    if ext == "svg+xml":
+        ext = "svg"
+        need_conversion = True
+
     tmp_file = osp.join(TEMP_DIR, "tmp_data_image." + ext)
-    file_hash = int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
-    name = str(file_hash) + "." + ext
+    # create a temporary file
+    basename = str(int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8))
+    name = basename + "." + ext
 
     # Save downloaded data in the temporary file
     try:
@@ -320,14 +326,35 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
     finally:
         dst.close()
 
+    if need_conversion:
+        ext = ".png"
+
+        conv_file = tmp_file
+        conv_name = name
+
+        png = osp.splitext(tmp_file)[0] + ".png"
+
+        magick(tmp_file, png)
+
+        tmp_file = png
+
+        with open(tmp_file, "rb") as dst:
+            encoded = str(base64.b64encode(dst.read()), "utf-8")
+
     width, height, real_width, real_height, size = get_data(view, tmp_file)
 
     def on_navigate(href):
 
         if href == "save":
-            save(tmp_file, name, "data_url")
+            if need_conversion:
+                save(conv_file, conv_name, "data_url")
+            else:
+                save(tmp_file, name, "data_url")
         elif href == "save_as":
-            convert(tmp_file, "data_url", name)
+            if need_conversion:
+                convert(conv_file, "dat_url", conv_name)
+            else:
+                convert(tmp_file, "data_url", name)
         else:
             sublime.active_window().open_file(tmp_file)
 
