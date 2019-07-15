@@ -247,33 +247,33 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
     need_conversion = name.endswith(formats_to_convert)  # => True
     basename, ext = osp.splitext(name)  # => ("Example", ".svg")
     # create a temporary file
-    tmp_file = osp.join(TEMP_DIR, "tmp_image" + ext)  # => "TEMP_DIR/tmp_image.svg"
+    temp_img = osp.join(TEMP_DIR, "tmp_image" + ext)  # => "TEMP_DIR/tmp_image.svg"
 
     # Save downloaded data in the temporary file
     content = f.read()
-    with open(tmp_file, "wb") as dst:
-        dst.write(content)
+    with open(temp_img, "wb") as img:
+        img.write(content)
 
     # if the file needs conversion, convert it then read data from the resulting png
     if need_conversion:
         ext = ".png"
         # keep the image's temporary file and name for later use
-        conv_file = tmp_file  # => "TEMP_DIR/tmp_image.svg"
+        conv_file = temp_img  # => "TEMP_DIR/tmp_image.svg"
 
         # => "TEMP_DIR/tmp_image.png"
-        png = osp.splitext(tmp_file)[0] + ".png"
+        temp_png = osp.splitext(temp_img)[0] + ".png"
 
         # use the magick command of Imagemagick to convert the image to png
-        magick(tmp_file, png)
+        magick(temp_img, temp_png)
 
         # set temp_file and name to the png file
-        tmp_file = png  # => "TEMP_DIR/tmp_image.png"
+        temp_img = temp_png  # => "TEMP_DIR/tmp_image.png"
 
         # read data from the resulting png
-        with open(tmp_file, "rb") as dst:
-            content = dst.read()
+        with open(temp_img, "rb") as img:
+            content = img.read()
 
-    width, height, real_width, real_height, size = get_data(view, tmp_file)
+    width, height, real_width, real_height, size = get_data(view, temp_img)
     encoded = str(base64.b64encode(content), "utf-8")
 
     def on_navigate(href):
@@ -282,14 +282,14 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
             if need_conversion:
                 save(conv_file, name, "url")
             else:
-                save(tmp_file, name, "url")
+                save(temp_img, name, "url")
         elif href == "save_as":
             if need_conversion:
                 convert(conv_file, "url", name)
             else:
-                convert(tmp_file, "url", name)
+                convert(temp_img, "url", name)
         else:
-            sublime.active_window().open_file(tmp_file)
+            sublime.active_window().open_file(temp_img)
 
     view.show_popup(
         TEMPLATE % (width, height, ext, encoded, real_width, real_height,
@@ -310,36 +310,36 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
         ext = "svg"
         need_conversion = True
 
-    tmp_file = osp.join(TEMP_DIR, "tmp_data_image." + ext)
+    temp_img = osp.join(TEMP_DIR, "tmp_data_image." + ext)
     # create a temporary file
     basename = str(int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8))
     name = basename + "." + ext
 
     # Save downloaded data in the temporary file
     try:
-        dst = open(tmp_file, "wb")
-        dst.write(base64.b64decode(encoded))
+        img = open(temp_img, "wb")
+        img.write(base64.b64decode(encoded))
     except Exception as e:
         print(e)
         return
     finally:
-        dst.close()
+        img.close()
 
     if need_conversion:
         ext = ".png"
 
-        conv_file = tmp_file
+        conv_file = temp_img
 
-        png = osp.splitext(tmp_file)[0] + ".png"
+        temp_png = osp.splitext(temp_img)[0] + ".png"
 
-        magick(tmp_file, png)
+        magick(temp_img, temp_png)
 
-        tmp_file = png
+        with open(temp_png, "rb") as png:
+            encoded = str(base64.b64encode(png.read()), "utf-8")
 
-        with open(tmp_file, "rb") as dst:
-            encoded = str(base64.b64encode(dst.read()), "utf-8")
+        temp_img = temp_png
 
-    width, height, real_width, real_height, size = get_data(view, tmp_file)
+    width, height, real_width, real_height, size = get_data(view, temp_img)
 
     def on_navigate(href):
 
@@ -347,14 +347,14 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
             if need_conversion:
                 save(conv_file, name, "data_url")
             else:
-                save(tmp_file, name, "data_url")
+                save(temp_img, name, "data_url")
         elif href == "save_as":
             if need_conversion:
                 convert(conv_file, "dat_url", name)
             else:
-                convert(tmp_file, "data_url", name)
+                convert(temp_img, "data_url", name)
         else:
-            sublime.active_window().open_file(tmp_file)
+            sublime.active_window().open_file(temp_img)
 
     view.show_popup(
         TEMPLATE % (width, height, ext, encoded, real_width, real_height,
@@ -387,15 +387,15 @@ def handle_as_file(view: sublime.View, point: int, string: str):
         conv_file = file
 
         # create a temporary file
-        tmp_file = osp.join(TEMP_DIR, "tmp_png.png")
+        temp_png = osp.join(TEMP_DIR, "temp_png.png")
 
         # use the magick command of Imagemagick to convert the image to png
-        magick(file, tmp_file)
+        magick(file, temp_png)
 
-        file = tmp_file
+        file = temp_png
 
-    with open(file, "rb") as f:
-        encoded = str(base64.b64encode(f.read()), "utf-8")
+    with open(file, "rb") as img:
+        encoded = str(base64.b64encode(img.read()), "utf-8")
 
     width, height, real_width, real_height, size = get_data(view, file)
 
