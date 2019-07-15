@@ -19,7 +19,7 @@
     "recursive": true,
 
     // the name of the folder in which saved images will be stored
-    "image_folder_name": "Previewed Images",
+    "image_folder_name": "previewed_images",
 
     // images that require conversion before rendering
     // Sublime Text's popups supported image formats ("png", "jpg", "jpeg", "bmp" and "gif") will be filtered out
