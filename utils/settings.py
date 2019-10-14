@@ -1,6 +1,3 @@
-import sublime  # type: ignore
-
-
 class Settings:
 
     preview_on_hover = True
