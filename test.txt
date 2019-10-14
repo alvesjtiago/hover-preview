@@ -39,3 +39,9 @@
 ## Files
 
 [x] ./screenshot.png
+
+<!-- convert screenshot.png to bmp -->
+
+[x] previewed_images/screenshot.bmp
+
+[x] ./previewed_images/screenshot.bmp

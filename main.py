@@ -62,7 +62,7 @@ def on_change(s):
     image_file_re = re.compile(r"(?:"                                   # drive
                                r"\w:\\|"                                # Windows (e.g C:\)
                                r"\\\\|"                                 # Linux (\\)
-                               r"\.{0,2}[\\/]"                          # Mac OS and/or relative
+                               r"(?:\.{1,2}[\\/])?"                     # Mac OS and/or relative
                                r")"
                                r"(?:[-.@\w]+?[\\/])*"                   # body
                                r"[-.@\w]+?"                             # name
