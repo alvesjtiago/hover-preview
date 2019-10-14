@@ -266,12 +266,12 @@ def handle_as_url(view: sublime.View, point: int, string: str, name: str):
         # use the magick command of Imagemagick to convert the image to png
         magick(temp_img, temp_png)
 
+        # read data from the resulting png
+        with open(temp_png, "rb") as png:
+            content = png.read()
+
         # set temp_file and name to the png file
         temp_img = temp_png  # => "TEMP_DIR/tmp_image.png"
-
-        # read data from the resulting png
-        with open(temp_img, "rb") as img:
-            content = img.read()
 
     width, height, real_width, real_height, size = get_data(view, temp_img)
     encoded = str(base64.b64encode(content), "utf-8")
@@ -310,8 +310,8 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
         ext = "svg"
         need_conversion = True
 
-    temp_img = osp.join(TEMP_DIR, "tmp_data_image." + ext)
     # create a temporary file
+    temp_img = osp.join(TEMP_DIR, "tmp_data_image." + ext)
     basename = str(int(hashlib.sha1(encoded.encode('utf-8')).hexdigest(), 16) % (10 ** 8))
     name = basename + "." + ext
 
@@ -339,8 +339,6 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
 
         temp_img = temp_png
 
-    width, height, real_width, real_height, size = get_data(view, temp_img)
-
     def on_navigate(href):
 
         if href == "save":
@@ -355,6 +353,8 @@ def handle_as_data_url(view: sublime.View, point: int, ext: str, encoded: str):
                 convert(temp_img, "data_url", name)
         else:
             sublime.active_window().open_file(temp_img)
+
+    width, height, real_width, real_height, size = get_data(view, temp_img)
 
     view.show_popup(
         TEMPLATE % (width, height, ext, encoded, real_width, real_height,
