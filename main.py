@@ -50,9 +50,8 @@ def on_change(s):
     ST_FORMATS = {"png", "jpg", "jpeg", "bmp", "gif"}
     unique_formats_to_convert = set(Settings.formats_to_convert)
     all_formats = list(ST_FORMATS.union(unique_formats_to_convert))
-    # filter ou ST supported formats
+    # filter out ST supported formats
     formats_to_convert = tuple('.' + ext for ext in unique_formats_to_convert - ST_FORMATS)
-    # print("[Image Preview]", all_formats, formats_to_convert, unique_formats_to_convert)
     formats_ored = '|'.join(all_formats)
     image_url_re = re.compile(r"(?:(https?)://)?"                       # http(s)://
                               r"(?:[^./\"'\s]+\.){1,3}[^/\"'.\s]+/"     # host
