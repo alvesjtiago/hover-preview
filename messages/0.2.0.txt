@@ -14,6 +14,7 @@ Image Preview v0.2.0
 ## Fixes
 
 - [data-]URL images on long lines where not previewed (#40)
+- Fix relative paths without leading dots (#41)
 
 ## Notes
 
