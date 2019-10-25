@@ -22,9 +22,6 @@
                     "pylint":
                     {
                         "enabled": false
-                    },
-                    "pycodestyle": {
-                        "maxLineLength": 120
                     }
                 }
             }
