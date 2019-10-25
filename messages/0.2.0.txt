@@ -19,4 +19,4 @@ Image Preview v0.2.0
 ## Notes
 
 - the "max_chars" settings was removed, it was more trouble than it worth
-- the default value for "image_folder_name" setting is now "previewed_images" (previously "Hovered Images")
+- the default value for "image_folder_name" setting is now "__previewed_images__" (previously "Hovered Images")

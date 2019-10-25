@@ -42,6 +42,6 @@
 
 <!-- convert screenshot.png to bmp -->
 
-[x] previewed_images/screenshot.bmp
+[x] __previewed_images__/screenshot.bmp
 
-[x] ./previewed_images/screenshot.bmp
+[x] ./__previewed_images__/screenshot.bmp
