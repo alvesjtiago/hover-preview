@@ -9,11 +9,11 @@
                 "children":
                 [
                     {
-                        "caption": "Image Preview",
+                        "caption": "ImagePreview",
                         "command": "edit_settings",
                         "args":
                         {
-                            "base_file": "${packages}/Image Preview/Image Preview.sublime-settings",
+                            "base_file": "${packages}/ImagePreview/ImagePreview.sublime-settings",
                         }
                     }
                 ]

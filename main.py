@@ -73,7 +73,7 @@ def on_change(s):
 
 
 def plugin_loaded():
-    loaded_settings = sublime.load_settings("Image Preview.sublime-settings")
+    loaded_settings = sublime.load_settings("ImagePreview.sublime-settings")
     loaded_settings.clear_on_change("image_preview")
     on_change(loaded_settings)
     loaded_settings.add_on_change("image_preview", lambda ls=loaded_settings: on_change(ls))

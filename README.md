@@ -1,8 +1,8 @@
-# Image Preview
+# ImagePreview
 
 ### The Sublime Text 3 image previewing plugin
 
-![Screenshot of Image Preview, a plugin for Sublime Text 3 by @alvesjtiago](screenshot.png)
+![Screenshot of ImagePreview, a plugin for Sublime Text 3 by @alvesjtiago](screenshot.png)
 
 ## Usage
 
@@ -14,7 +14,7 @@
 
 ### Package Control
 
-Search for "Image Preview" and install.
+Search for "ImagePreview" and install.
 
 ### Manual
 
@@ -45,5 +45,5 @@ Or manually create a folder named "Preview Image" on your Packages folder and co
 
 ## Contribute
 
-Image Preview is a small utility created by [Tiago Alves](https://twitter.com/alvesjtiago).
+ImagePreview is a small utility created by [Tiago Alves](https://twitter.com/alvesjtiago).
 Any help on this project is more than welcome. Or if you find any problems, please comment or open an issue with as much information as you can provide.

@@ -1,10 +1,10 @@
 
-Image Preview v0.2.0
+ImagePreview v0.2.0
 ===========================
 
 ## Breaking Changes
 
-- the plugin was renamed to "Image Preview" (previously "Hover Image Preview")
+- the plugin was renamed to "ImagePreview" (previously "Hover Image Preview")
 - the settings file was renamed accordingly
 
 ## New Features
