@@ -36,7 +36,7 @@ cd "%APPDATA%\Sublime Text 3\Packages"
 git clone --depth=1 https://github.com/alvesjtiago/sublime-image-preview.git
 ```
 
-Or manually create a folder named "Preview Image" on your Packages folder and copy the content of this repo to it.
+Or manually create a folder named "ImagePreview" on your Packages folder and copy the content of this repo to it.
 
 ## Requirements
 
