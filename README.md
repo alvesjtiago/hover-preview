@@ -1,8 +1,8 @@
 # ImagePreview
 
-### The Sublime Text 3 image previewing plugin
+### The Sublime Text image previewing plugin
 
-![Screenshot of ImagePreview, a plugin for Sublime Text 3 by @alvesjtiago](screenshot.png)
+![Screenshot of ImagePreview, a plugin for Sublime Text by @alvesjtiago](screenshot.png)
 
 ## Usage
 
