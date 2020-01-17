@@ -2,9 +2,6 @@
     // preview images on hover
     "preview_on_hover": true,
 
-    // the maximum number of characters to search in
-    "max_chars": 2048,
-
     // "project": searches for the hovered file name in the project
 
     // "file": joins the file path to the hovered file name and see
@@ -22,8 +19,9 @@
     "recursive": true,
 
     // the name of the folder in which saved images will be stored
-    "image_folder_name": "Hovered Images",
+    "image_folder_name": "__previewed_images__",
 
     // images that require conversion before rendering
-    "formats_to_convert": ["svg", "svgz", "ico", "webp"],
+    // Sublime Text's popups supported image formats ("png", "jpg", "jpeg", "bmp" and "gif") will be filtered out
+    "formats_to_convert": ["svg", "svgz", "ico", "webp"]
 }

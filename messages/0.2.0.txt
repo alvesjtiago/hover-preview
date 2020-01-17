@@ -1,0 +1,22 @@
+
+ImagePreview v0.2.0
+===========================
+
+## Breaking Changes
+
+- the plugin was renamed to "ImagePreview" (previously "Hover Image Preview")
+- the settings file was renamed accordingly
+
+## New Features
+
+- added support for SVG data URLs (#29)
+
+## Fixes
+
+- [data-]URL images on long lines where not previewed (#40)
+- Fix relative paths without leading dots (#41)
+
+## Notes
+
+- the "max_chars" settings was removed, it was more trouble than it worth
+- the default value for "image_folder_name" setting is now "__previewed_images__" (previously "Hovered Images")

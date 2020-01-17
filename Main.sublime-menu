@@ -9,11 +9,11 @@
                 "children":
                 [
                     {
-                        "caption": "Hover Image Preview",
+                        "caption": "ImagePreview",
                         "command": "edit_settings",
                         "args":
                         {
-                            "base_file": "${packages}/Hover Image Preview/Hover Preview.sublime-settings",
+                            "base_file": "${packages}/ImagePreview/ImagePreview.sublime-settings",
                         }
                     }
                 ]

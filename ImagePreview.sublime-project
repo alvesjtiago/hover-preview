@@ -1,0 +1,30 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+    "settings": {
+        "rulers":
+        [
+            120
+        ],
+        "LSP": {
+            "pyls":
+            {
+                "plugins":
+                {
+                    "pyflakes":
+                    {
+                        "enabled": false
+                    },
+                    "pylint":
+                    {
+                        "enabled": false
+                    }
+                }
+            }
+        }
+    }
+}
