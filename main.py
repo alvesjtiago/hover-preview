@@ -56,7 +56,7 @@ def on_change(s):
     image_url_re = re.compile(r"(?:(https?)://)?"                       # http(s)://
                               r"(?:[^./\"'\s]+\.){1,3}[^/\"'.\s]+/"     # host
                               r"(?:[^/\"'\s]+/)*"                       # path
-                              r"([^\"'/\s]+?\.(?:%s))" % formats_ored)  # name
+                              r"([^\"'/\s]+?\.(?:%s))([\?][^)\" \"]*)?" % formats_ored)  # name
 
     image_file_re = re.compile(r"(?:"                                   # drive
                                r"\w:\\|"                                # Windows (e.g C:\)

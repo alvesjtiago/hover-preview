@@ -19,6 +19,8 @@
 
 [x] gettyimages.fr/gi-resources/images/Embed/new/embed2.jpg
 
+[x] https://s3-brentwoodhome.imgix.net/sale/winterhero.jpg?rect=376,0,1365,1365&bri=-8&txtalign=middle,center&txtfont=Didot,Italic&txt=Veteran's%20Day%20Sale&txtclr=FFFFFF&txtsize=42&w=414
+
 
 ## Data URLs
 

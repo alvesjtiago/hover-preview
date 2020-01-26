@@ -1,0 +1,7 @@
+
+ImagePreview v0.2.2
+===========================
+
+## New features
+
+- Support URL params
